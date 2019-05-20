@@ -9,7 +9,7 @@ and may not be redistributed without written permission.*/
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
-int main( int argc, char* args[] )
+int main_hello_SDL( int argc, char* args[] )
 {
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
