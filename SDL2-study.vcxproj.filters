@@ -21,5 +21,8 @@
     <ClCompile Include="src\02_getting_an_image_on_the_screen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\03_event_driven_programming.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

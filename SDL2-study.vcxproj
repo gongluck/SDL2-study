@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="src\01_hello_SDL.cpp" />
     <ClCompile Include="src\02_getting_an_image_on_the_screen.cpp" />
+    <ClCompile Include="src\03_event_driven_programming.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
