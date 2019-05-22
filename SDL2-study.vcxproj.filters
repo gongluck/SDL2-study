@@ -24,5 +24,8 @@
     <ClCompile Include="src\03_event_driven_programming.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\04_key_presses.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
