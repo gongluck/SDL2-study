@@ -130,7 +130,7 @@ SDL_Surface* loadSurface_extension_libraries_and_loading_other_image_formats( st
 	return optimizedSurface;
 }
 
-int main( int argc, char* args[] )
+int main_extension_libraries_and_loading_other_image_formats( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_extension_libraries_and_loading_other_image_formats() )
