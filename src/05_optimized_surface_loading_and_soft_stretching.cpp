@@ -118,7 +118,7 @@ SDL_Surface* loadSurface_optimized_surface_loading_and_soft_stretching( std::str
 	return optimizedSurface;
 }
 
-int main( int argc, char* args[] )
+int main_optimized_surface_loading_and_soft_stretching( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_optimized_surface_loading_and_soft_stretching() )

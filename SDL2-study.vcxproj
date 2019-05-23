@@ -24,6 +24,7 @@
     <ClCompile Include="src\03_event_driven_programming.cpp" />
     <ClCompile Include="src\04_key_presses.cpp" />
     <ClCompile Include="src\05_optimized_surface_loading_and_soft_stretching.cpp" />
+    <ClCompile Include="src\06_extension_libraries_and_loading_other_image_formats.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
