@@ -153,7 +153,7 @@ SDL_Surface* loadSurface_key_presses( std::string path )
 }
 
 
-int main( int argc, char* args[] )
+int main_key_presses( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_key_presses() )

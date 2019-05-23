@@ -27,5 +27,8 @@
     <ClCompile Include="src\04_key_presses.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\05_optimized_surface_loading_and_soft_stretching.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
