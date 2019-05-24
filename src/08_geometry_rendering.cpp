@@ -106,7 +106,7 @@ void close_geometry_rendering()
 	SDL_Quit();
 }
 
-SDL_Texture* loadTexture( std::string path )
+SDL_Texture* loadTexture_geometry_rendering( std::string path )
 {
 	//The final texture
 	SDL_Texture* newTexture = NULL;
@@ -133,7 +133,7 @@ SDL_Texture* loadTexture( std::string path )
 	return newTexture;
 }
 
-int main( int argc, char* args[] )
+int main_geometry_rendering( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_geometry_rendering() )
