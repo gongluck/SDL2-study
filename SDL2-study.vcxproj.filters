@@ -54,5 +54,8 @@
     <ClCompile Include="src\13_alpha_blending.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\14_animated_sprites_and_vsync.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

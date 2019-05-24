@@ -12,14 +12,14 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 //Texture wrapper class
-class LTexture_alpha_blending
+class LTexture_animated_sprites_and_vsync
 {
 	public:
 		//Initializes variables
-		LTexture_alpha_blending();
+		LTexture_animated_sprites_and_vsync();
 
 		//Deallocates memory
-		~LTexture_alpha_blending();
+		~LTexture_animated_sprites_and_vsync();
 
 		//Loads image at specified path
 		bool loadFromFile( std::string path );
@@ -53,26 +53,27 @@ class LTexture_alpha_blending
 };
 
 //Starts up SDL and creates window
-bool init_alpha_blending();
+bool init_animated_sprites_and_vsync();
 
 //Loads media
-bool loadMedia_alpha_blending();
+bool loadMedia_animated_sprites_and_vsync();
 
 //Frees media and shuts down SDL
-void close_alpha_blending();
+void close_animated_sprites_and_vsync();
 
 //The window we'll be rendering to
-SDL_Window* gWindow_alpha_blending = NULL;
+SDL_Window* gWindow_animated_sprites_and_vsync = NULL;
 
 //The window renderer
-SDL_Renderer* gRenderer_alpha_blending = NULL;
+SDL_Renderer* gRenderer_animated_sprites_and_vsync = NULL;
 
-//Scene textures
-LTexture_alpha_blending gModulatedTexture_alpha_blending;
-LTexture_alpha_blending gBackgroundTexture_alpha_blending;
+//Walking animation
+const int WALKING_ANIMATION_FRAMES_animated_sprites_and_vsync = 4;
+SDL_Rect gSpriteClips_animated_sprites_and_vsync[ WALKING_ANIMATION_FRAMES_animated_sprites_and_vsync];
+LTexture_animated_sprites_and_vsync gSpriteSheetTexture_animated_sprites_and_vsync;
 
 
-LTexture_alpha_blending::LTexture_alpha_blending()
+LTexture_animated_sprites_and_vsync::LTexture_animated_sprites_and_vsync()
 {
 	//Initialize
 	mTexture = NULL;
@@ -80,13 +81,13 @@ LTexture_alpha_blending::LTexture_alpha_blending()
 	mHeight = 0;
 }
 
-LTexture_alpha_blending::~LTexture_alpha_blending()
+LTexture_animated_sprites_and_vsync::~LTexture_animated_sprites_and_vsync()
 {
 	//Deallocate
 	free();
 }
 
-bool LTexture_alpha_blending::loadFromFile( std::string path )
+bool LTexture_animated_sprites_and_vsync::loadFromFile( std::string path )
 {
 	//Get rid of preexisting texture
 	free();
@@ -106,7 +107,7 @@ bool LTexture_alpha_blending::loadFromFile( std::string path )
 		SDL_SetColorKey( loadedSurface, SDL_TRUE, SDL_MapRGB( loadedSurface->format, 0, 0xFF, 0xFF ) );
 
 		//Create texture from surface pixels
-        newTexture = SDL_CreateTextureFromSurface( gRenderer_alpha_blending, loadedSurface );
+        newTexture = SDL_CreateTextureFromSurface( gRenderer_animated_sprites_and_vsync, loadedSurface );
 		if( newTexture == NULL )
 		{
 			printf( "Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError() );
@@ -127,7 +128,7 @@ bool LTexture_alpha_blending::loadFromFile( std::string path )
 	return mTexture != NULL;
 }
 
-void LTexture_alpha_blending::free()
+void LTexture_animated_sprites_and_vsync::free()
 {
 	//Free texture if it exists
 	if( mTexture != NULL )
@@ -139,25 +140,25 @@ void LTexture_alpha_blending::free()
 	}
 }
 
-void LTexture_alpha_blending::setColor( Uint8 red, Uint8 green, Uint8 blue )
+void LTexture_animated_sprites_and_vsync::setColor( Uint8 red, Uint8 green, Uint8 blue )
 {
 	//Modulate texture rgb
 	SDL_SetTextureColorMod( mTexture, red, green, blue );
 }
 
-void LTexture_alpha_blending::setBlendMode( SDL_BlendMode blending )
+void LTexture_animated_sprites_and_vsync::setBlendMode( SDL_BlendMode blending )
 {
 	//Set blending function
 	SDL_SetTextureBlendMode( mTexture, blending );
 }
 		
-void LTexture_alpha_blending::setAlpha( Uint8 alpha )
+void LTexture_animated_sprites_and_vsync::setAlpha( Uint8 alpha )
 {
 	//Modulate texture alpha
 	SDL_SetTextureAlphaMod( mTexture, alpha );
 }
 
-void LTexture_alpha_blending::render( int x, int y, SDL_Rect* clip )
+void LTexture_animated_sprites_and_vsync::render( int x, int y, SDL_Rect* clip )
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
@@ -170,20 +171,20 @@ void LTexture_alpha_blending::render( int x, int y, SDL_Rect* clip )
 	}
 
 	//Render to screen
-	SDL_RenderCopy( gRenderer_alpha_blending, mTexture, clip, &renderQuad );
+	SDL_RenderCopy( gRenderer_animated_sprites_and_vsync, mTexture, clip, &renderQuad );
 }
 
-int LTexture_alpha_blending::getWidth()
+int LTexture_animated_sprites_and_vsync::getWidth()
 {
 	return mWidth;
 }
 
-int LTexture_alpha_blending::getHeight()
+int LTexture_animated_sprites_and_vsync::getHeight()
 {
 	return mHeight;
 }
 
-bool init_alpha_blending()
+bool init()
 {
 	//Initialization flag
 	bool success = true;
@@ -203,17 +204,17 @@ bool init_alpha_blending()
 		}
 
 		//Create window
-		gWindow_alpha_blending = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-		if( gWindow_alpha_blending == NULL )
+		gWindow_animated_sprites_and_vsync = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		if( gWindow_animated_sprites_and_vsync == NULL )
 		{
 			printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
 			success = false;
 		}
 		else
 		{
-			//Create renderer for window
-			gRenderer_alpha_blending = SDL_CreateRenderer( gWindow_alpha_blending, -1, SDL_RENDERER_ACCELERATED );
-			if( gRenderer_alpha_blending == NULL )
+			//Create vsynced renderer for window
+			gRenderer_animated_sprites_and_vsync = SDL_CreateRenderer( gWindow_animated_sprites_and_vsync, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+			if( gRenderer_animated_sprites_and_vsync == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
 				success = false;
@@ -221,7 +222,7 @@ bool init_alpha_blending()
 			else
 			{
 				//Initialize renderer color
-				SDL_SetRenderDrawColor( gRenderer_alpha_blending, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_SetRenderDrawColor( gRenderer_animated_sprites_and_vsync, 0xFF, 0xFF, 0xFF, 0xFF );
 
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
@@ -237,61 +238,71 @@ bool init_alpha_blending()
 	return success;
 }
 
-bool loadMedia_alpha_blending()
+bool loadMedia_animated_sprites_and_vsync()
 {
 	//Loading success flag
 	bool success = true;
 
-	//Load front alpha texture
-	if( !gModulatedTexture_alpha_blending.loadFromFile( "fadeout.png" ) )
+	//Load sprite sheet texture
+	if( !gSpriteSheetTexture_animated_sprites_and_vsync.loadFromFile( "foo2.png" ) )
 	{
-		printf( "Failed to load front texture!\n" );
+		printf( "Failed to load walking animation texture!\n" );
 		success = false;
 	}
 	else
 	{
-		//Set standard alpha blending
-		gModulatedTexture_alpha_blending.setBlendMode( SDL_BLENDMODE_BLEND );
-	}
+		//Set sprite clips
+		gSpriteClips_animated_sprites_and_vsync[ 0 ].x =   0;
+		gSpriteClips_animated_sprites_and_vsync[ 0 ].y =   0;
+		gSpriteClips_animated_sprites_and_vsync[ 0 ].w =  64;
+		gSpriteClips_animated_sprites_and_vsync[ 0 ].h = 205;
 
-	//Load background texture
-	if( !gBackgroundTexture_alpha_blending.loadFromFile( "fadein.png" ) )
-	{
-		printf( "Failed to load background texture!\n" );
-		success = false;
+		gSpriteClips_animated_sprites_and_vsync[ 1 ].x =  64;
+		gSpriteClips_animated_sprites_and_vsync[ 1 ].y =   0;
+		gSpriteClips_animated_sprites_and_vsync[ 1 ].w =  64;
+		gSpriteClips_animated_sprites_and_vsync[ 1 ].h = 205;
+		
+		gSpriteClips_animated_sprites_and_vsync[ 2 ].x = 128;
+		gSpriteClips_animated_sprites_and_vsync[ 2 ].y =   0;
+		gSpriteClips_animated_sprites_and_vsync[ 2 ].w =  64;
+		gSpriteClips_animated_sprites_and_vsync[ 2 ].h = 205;
+
+		gSpriteClips_animated_sprites_and_vsync[ 3 ].x = 196;
+		gSpriteClips_animated_sprites_and_vsync[ 3 ].y =   0;
+		gSpriteClips_animated_sprites_and_vsync[ 3 ].w =  64;
+		gSpriteClips_animated_sprites_and_vsync[ 3 ].h = 205;
 	}
 	
 	return success;
 }
 
-void close_alpha_blending()
+void close_animated_sprites_and_vsync()
 {
 	//Free loaded images
-	gModulatedTexture_alpha_blending.free();
-	gBackgroundTexture_alpha_blending.free();
+	gSpriteSheetTexture_animated_sprites_and_vsync.free();
 
 	//Destroy window	
-	SDL_DestroyRenderer( gRenderer_alpha_blending);
-	SDL_DestroyWindow( gWindow_alpha_blending);
-	gWindow_alpha_blending = NULL;
-	gRenderer_alpha_blending = NULL;
+	SDL_DestroyRenderer( gRenderer_animated_sprites_and_vsync);
+	SDL_DestroyWindow( gWindow_animated_sprites_and_vsync);
+	gWindow_animated_sprites_and_vsync = NULL;
+	gRenderer_animated_sprites_and_vsync = NULL;
 
 	//Quit SDL subsystems
 	IMG_Quit();
 	SDL_Quit();
 }
 
-int main_alpha_blending( int argc, char* args[] )
+int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
-	if( !init_alpha_blending() )
+	if( !init() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
 	else
 	{
 		//Load media
-		if( !loadMedia_alpha_blending() )
+		if( !loadMedia_animated_sprites_and_vsync() )
 		{
 			printf( "Failed to load media!\n" );
 		}
@@ -303,8 +314,8 @@ int main_alpha_blending( int argc, char* args[] )
 			//Event handler
 			SDL_Event e;
 
-			//Modulation component
-			Uint8 a = 255;
+			//Current animation frame
+			int frame = 0;
 
 			//While application is running
 			while( !quit )
@@ -317,59 +328,33 @@ int main_alpha_blending( int argc, char* args[] )
 					{
 						quit = true;
 					}
-					//Handle key presses
-					else if( e.type == SDL_KEYDOWN )
-					{
-						//Increase alpha on w
-						if( e.key.keysym.sym == SDLK_w )
-						{
-							//Cap if over 255
-							if( a + 32 > 255 )
-							{
-								a = 255;
-							}
-							//Increment otherwise
-							else
-							{
-								a += 32;
-							}
-						}
-						//Decrease alpha on s
-						else if( e.key.keysym.sym == SDLK_s )
-						{
-							//Cap if below 0
-							if( a - 32 < 0 )
-							{
-								a = 0;
-							}
-							//Decrement otherwise
-							else
-							{
-								a -= 32;
-							}
-						}
-					}
 				}
 
 				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer_alpha_blending, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer_alpha_blending);
+				SDL_SetRenderDrawColor( gRenderer_animated_sprites_and_vsync, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_RenderClear( gRenderer_animated_sprites_and_vsync);
 
-				//Render background
-				gBackgroundTexture_alpha_blending.render( 0, 0 );
-
-				//Render front blended
-				gModulatedTexture_alpha_blending.setAlpha( a );
-				gModulatedTexture_alpha_blending.render( 0, 0 );
+				//Render current frame
+				SDL_Rect* currentClip = &gSpriteClips_animated_sprites_and_vsync[ frame / 4 ];
+				gSpriteSheetTexture_animated_sprites_and_vsync.render( ( SCREEN_WIDTH - currentClip->w ) / 2, ( SCREEN_HEIGHT - currentClip->h ) / 2, currentClip );
 
 				//Update screen
-				SDL_RenderPresent( gRenderer_alpha_blending);
+				SDL_RenderPresent( gRenderer_animated_sprites_and_vsync);
+
+				//Go to next frame
+				++frame;
+
+				//Cycle animation
+				if( frame / 4 >= WALKING_ANIMATION_FRAMES_animated_sprites_and_vsync)
+				{
+					frame = 0;
+				}
 			}
 		}
 	}
 
 	//Free resources and close SDL
-	close_alpha_blending();
+	close_animated_sprites_and_vsync();
 
 	return 0;
 }
