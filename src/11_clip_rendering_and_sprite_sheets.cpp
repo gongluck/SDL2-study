@@ -267,7 +267,7 @@ void close_clip_rendering_and_sprite_sheets()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_clip_rendering_and_sprite_sheets( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_clip_rendering_and_sprite_sheets() )
