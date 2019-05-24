@@ -33,6 +33,7 @@
     <ClCompile Include="src\12_color_modulation.cpp" />
     <ClCompile Include="src\13_alpha_blending.cpp" />
     <ClCompile Include="src\14_animated_sprites_and_vsync.cpp" />
+    <ClCompile Include="src\15_rotation_and_flipping.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

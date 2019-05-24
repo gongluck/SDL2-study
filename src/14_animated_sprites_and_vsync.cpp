@@ -292,7 +292,7 @@ void close_animated_sprites_and_vsync()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_animated_sprites_and_vsync( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init() )
