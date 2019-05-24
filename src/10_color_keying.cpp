@@ -12,14 +12,14 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 //Texture wrapper class
-class LTexture
+class LTexture_color_keying
 {
 	public:
 		//Initializes variables
-		LTexture();
+		LTexture_color_keying();
 
 		//Deallocates memory
-		~LTexture();
+		~LTexture_color_keying();
 
 		//Loads image at specified path
 		bool loadFromFile( std::string path );
@@ -59,11 +59,11 @@ SDL_Window* gWindow_color_keying = NULL;
 SDL_Renderer* gRenderer_color_keying = NULL;
 
 //Scene textures
-LTexture gFooTexture_color_keying;
-LTexture gBackgroundTexture_color_keying;
+LTexture_color_keying gFooTexture_color_keying;
+LTexture_color_keying gBackgroundTexture_color_keying;
 
 
-LTexture::LTexture()
+LTexture_color_keying::LTexture_color_keying()
 {
 	//Initialize
 	mTexture = NULL;
@@ -71,13 +71,13 @@ LTexture::LTexture()
 	mHeight = 0;
 }
 
-LTexture::~LTexture()
+LTexture_color_keying::~LTexture_color_keying()
 {
 	//Deallocate
 	free();
 }
 
-bool LTexture::loadFromFile( std::string path )
+bool LTexture_color_keying::loadFromFile( std::string path )
 {
 	//Get rid of preexisting texture
 	free();
@@ -118,7 +118,7 @@ bool LTexture::loadFromFile( std::string path )
 	return mTexture != NULL;
 }
 
-void LTexture::free()
+void LTexture_color_keying::free()
 {
 	//Free texture if it exists
 	if( mTexture != NULL )
@@ -130,19 +130,19 @@ void LTexture::free()
 	}
 }
 
-void LTexture::render( int x, int y )
+void LTexture_color_keying::render( int x, int y )
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
 	SDL_RenderCopy( gRenderer_color_keying, mTexture, NULL, &renderQuad );
 }
 
-int LTexture::getWidth()
+int LTexture_color_keying::getWidth()
 {
 	return mWidth;
 }
 
-int LTexture::getHeight()
+int LTexture_color_keying::getHeight()
 {
 	return mHeight;
 }
@@ -240,7 +240,7 @@ void close_color_keying()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_color_keying( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_color_keying() )
