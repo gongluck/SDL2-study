@@ -12,14 +12,14 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 //Texture wrapper class
-class LTexture_color_modulation
+class LTexture_alpha_blending
 {
 	public:
 		//Initializes variables
-		LTexture_color_modulation();
+		LTexture_alpha_blending();
 
 		//Deallocates memory
-		~LTexture_color_modulation();
+		~LTexture_alpha_blending();
 
 		//Loads image at specified path
 		bool loadFromFile( std::string path );
@@ -30,6 +30,12 @@ class LTexture_color_modulation
 		//Set color modulation
 		void setColor( Uint8 red, Uint8 green, Uint8 blue );
 
+		//Set blending
+		void setBlendMode( SDL_BlendMode blending );
+
+		//Set alpha modulation
+		void setAlpha( Uint8 alpha );
+		
 		//Renders texture at given point
 		void render( int x, int y, SDL_Rect* clip = NULL );
 
@@ -47,25 +53,26 @@ class LTexture_color_modulation
 };
 
 //Starts up SDL and creates window
-bool init_color_modulation();
+bool init_alpha_blending();
 
 //Loads media
-bool loadMedia_color_modulation();
+bool loadMedia_alpha_blending();
 
 //Frees media and shuts down SDL
-void close_color_modulation();
+void close_alpha_blending();
 
 //The window we'll be rendering to
-SDL_Window* gWindow_color_modulation = NULL;
+SDL_Window* gWindow_alpha_blending = NULL;
 
 //The window renderer
-SDL_Renderer* gRenderer_color_modulation = NULL;
+SDL_Renderer* gRenderer_alpha_blending = NULL;
 
-//Scene texture
-LTexture_color_modulation gModulatedTexture_color_modulation;
+//Scene textures
+LTexture_alpha_blending gModulatedTexture_alpha_blending;
+LTexture_alpha_blending gBackgroundTexture_alpha_blending;
 
 
-LTexture_color_modulation::LTexture_color_modulation()
+LTexture_alpha_blending::LTexture_alpha_blending()
 {
 	//Initialize
 	mTexture = NULL;
@@ -73,13 +80,13 @@ LTexture_color_modulation::LTexture_color_modulation()
 	mHeight = 0;
 }
 
-LTexture_color_modulation::~LTexture_color_modulation()
+LTexture_alpha_blending::~LTexture_alpha_blending()
 {
 	//Deallocate
 	free();
 }
 
-bool LTexture_color_modulation::loadFromFile( std::string path )
+bool LTexture_alpha_blending::loadFromFile( std::string path )
 {
 	//Get rid of preexisting texture
 	free();
@@ -99,7 +106,7 @@ bool LTexture_color_modulation::loadFromFile( std::string path )
 		SDL_SetColorKey( loadedSurface, SDL_TRUE, SDL_MapRGB( loadedSurface->format, 0, 0xFF, 0xFF ) );
 
 		//Create texture from surface pixels
-        newTexture = SDL_CreateTextureFromSurface( gRenderer_color_modulation, loadedSurface );
+        newTexture = SDL_CreateTextureFromSurface( gRenderer_alpha_blending, loadedSurface );
 		if( newTexture == NULL )
 		{
 			printf( "Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError() );
@@ -120,7 +127,7 @@ bool LTexture_color_modulation::loadFromFile( std::string path )
 	return mTexture != NULL;
 }
 
-void LTexture_color_modulation::free()
+void LTexture_alpha_blending::free()
 {
 	//Free texture if it exists
 	if( mTexture != NULL )
@@ -132,13 +139,25 @@ void LTexture_color_modulation::free()
 	}
 }
 
-void LTexture_color_modulation::setColor( Uint8 red, Uint8 green, Uint8 blue )
+void LTexture_alpha_blending::setColor( Uint8 red, Uint8 green, Uint8 blue )
 {
-	//Modulate texture
+	//Modulate texture rgb
 	SDL_SetTextureColorMod( mTexture, red, green, blue );
 }
 
-void LTexture_color_modulation::render( int x, int y, SDL_Rect* clip )
+void LTexture_alpha_blending::setBlendMode( SDL_BlendMode blending )
+{
+	//Set blending function
+	SDL_SetTextureBlendMode( mTexture, blending );
+}
+		
+void LTexture_alpha_blending::setAlpha( Uint8 alpha )
+{
+	//Modulate texture alpha
+	SDL_SetTextureAlphaMod( mTexture, alpha );
+}
+
+void LTexture_alpha_blending::render( int x, int y, SDL_Rect* clip )
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
@@ -151,20 +170,20 @@ void LTexture_color_modulation::render( int x, int y, SDL_Rect* clip )
 	}
 
 	//Render to screen
-	SDL_RenderCopy( gRenderer_color_modulation, mTexture, clip, &renderQuad );
+	SDL_RenderCopy( gRenderer_alpha_blending, mTexture, clip, &renderQuad );
 }
 
-int LTexture_color_modulation::getWidth()
+int LTexture_alpha_blending::getWidth()
 {
 	return mWidth;
 }
 
-int LTexture_color_modulation::getHeight()
+int LTexture_alpha_blending::getHeight()
 {
 	return mHeight;
 }
 
-bool init_color_modulation()
+bool init_alpha_blending()
 {
 	//Initialization flag
 	bool success = true;
@@ -184,17 +203,17 @@ bool init_color_modulation()
 		}
 
 		//Create window
-		gWindow_color_modulation = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-		if( gWindow_color_modulation == NULL )
+		gWindow_alpha_blending = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		if( gWindow_alpha_blending == NULL )
 		{
-			printf( "Window could not be created! %s\n", SDL_GetError() );
+			printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
 			success = false;
 		}
 		else
 		{
 			//Create renderer for window
-			gRenderer_color_modulation = SDL_CreateRenderer( gWindow_color_modulation, -1, SDL_RENDERER_ACCELERATED );
-			if( gRenderer_color_modulation == NULL )
+			gRenderer_alpha_blending = SDL_CreateRenderer( gWindow_alpha_blending, -1, SDL_RENDERER_ACCELERATED );
+			if( gRenderer_alpha_blending == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
 				success = false;
@@ -202,7 +221,7 @@ bool init_color_modulation()
 			else
 			{
 				//Initialize renderer color
-				SDL_SetRenderDrawColor( gRenderer_color_modulation, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_SetRenderDrawColor( gRenderer_alpha_blending, 0xFF, 0xFF, 0xFF, 0xFF );
 
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
@@ -218,48 +237,61 @@ bool init_color_modulation()
 	return success;
 }
 
-bool loadMedia_color_modulation()
+bool loadMedia_alpha_blending()
 {
 	//Loading success flag
 	bool success = true;
 
-	//Load texture
-	if( !gModulatedTexture_color_modulation.loadFromFile( "colors.png" ) )
+	//Load front alpha texture
+	if( !gModulatedTexture_alpha_blending.loadFromFile( "fadeout.png" ) )
 	{
-		printf( "Failed to load colors texture!\n" );
+		printf( "Failed to load front texture!\n" );
+		success = false;
+	}
+	else
+	{
+		//Set standard alpha blending
+		gModulatedTexture_alpha_blending.setBlendMode( SDL_BLENDMODE_BLEND );
+	}
+
+	//Load background texture
+	if( !gBackgroundTexture_alpha_blending.loadFromFile( "fadein.png" ) )
+	{
+		printf( "Failed to load background texture!\n" );
 		success = false;
 	}
 	
 	return success;
 }
 
-void close_color_modulation()
+void close_alpha_blending()
 {
 	//Free loaded images
-	gModulatedTexture_color_modulation.free();
+	gModulatedTexture_alpha_blending.free();
+	gBackgroundTexture_alpha_blending.free();
 
 	//Destroy window	
-	SDL_DestroyRenderer( gRenderer_color_modulation);
-	SDL_DestroyWindow( gWindow_color_modulation);
-	gWindow_color_modulation = NULL;
-	gRenderer_color_modulation = NULL;
+	SDL_DestroyRenderer( gRenderer_alpha_blending);
+	SDL_DestroyWindow( gWindow_alpha_blending);
+	gWindow_alpha_blending = NULL;
+	gRenderer_alpha_blending = NULL;
 
 	//Quit SDL subsystems
 	IMG_Quit();
 	SDL_Quit();
 }
 
-int main_color_modulation( int argc, char* args[] )
+int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
-	if( !init_color_modulation() )
+	if( !init_alpha_blending() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
 	else
 	{
 		//Load media
-		if( !loadMedia_color_modulation() )
+		if( !loadMedia_alpha_blending() )
 		{
 			printf( "Failed to load media!\n" );
 		}
@@ -271,10 +303,8 @@ int main_color_modulation( int argc, char* args[] )
 			//Event handler
 			SDL_Event e;
 
-			//Modulation components
-			Uint8 r = 255;
-			Uint8 g = 255;
-			Uint8 b = 255;
+			//Modulation component
+			Uint8 a = 255;
 
 			//While application is running
 			while( !quit )
@@ -287,60 +317,59 @@ int main_color_modulation( int argc, char* args[] )
 					{
 						quit = true;
 					}
-					//On keypress change rgb values
+					//Handle key presses
 					else if( e.type == SDL_KEYDOWN )
 					{
-						switch( e.key.keysym.sym )
+						//Increase alpha on w
+						if( e.key.keysym.sym == SDLK_w )
 						{
-							//Increase red
-							case SDLK_q:
-							r += 32;
-							break;
-							
-							//Increase green
-							case SDLK_w:
-							g += 32;
-							break;
-							
-							//Increase blue
-							case SDLK_e:
-							b += 32;
-							break;
-							
-							//Decrease red
-							case SDLK_a:
-							r -= 32;
-							break;
-							
-							//Decrease green
-							case SDLK_s:
-							g -= 32;
-							break;
-							
-							//Decrease blue
-							case SDLK_d:
-							b -= 32;
-							break;
+							//Cap if over 255
+							if( a + 32 > 255 )
+							{
+								a = 255;
+							}
+							//Increment otherwise
+							else
+							{
+								a += 32;
+							}
+						}
+						//Decrease alpha on s
+						else if( e.key.keysym.sym == SDLK_s )
+						{
+							//Cap if below 0
+							if( a - 32 < 0 )
+							{
+								a = 0;
+							}
+							//Decrement otherwise
+							else
+							{
+								a -= 32;
+							}
 						}
 					}
 				}
 
 				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer_color_modulation, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer_color_modulation);
+				SDL_SetRenderDrawColor( gRenderer_alpha_blending, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_RenderClear( gRenderer_alpha_blending);
 
-				//Modulate and render texture
-				gModulatedTexture_color_modulation.setColor( r, g, b );
-				gModulatedTexture_color_modulation.render( 0, 0 );
+				//Render background
+				gBackgroundTexture_alpha_blending.render( 0, 0 );
+
+				//Render front blended
+				gModulatedTexture_alpha_blending.setAlpha( a );
+				gModulatedTexture_alpha_blending.render( 0, 0 );
 
 				//Update screen
-				SDL_RenderPresent( gRenderer_color_modulation);
+				SDL_RenderPresent( gRenderer_alpha_blending);
 			}
 		}
 	}
 
 	//Free resources and close SDL
-	close_color_modulation();
+	close_alpha_blending();
 
 	return 0;
 }

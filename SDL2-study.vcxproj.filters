@@ -51,5 +51,8 @@
     <ClCompile Include="src\12_color_modulation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\13_alpha_blending.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
