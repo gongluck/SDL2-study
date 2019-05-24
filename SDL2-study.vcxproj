@@ -28,6 +28,7 @@
     <ClCompile Include="src\07_texture_loading_and_rendering.cpp" />
     <ClCompile Include="src\08_geometry_rendering.cpp" />
     <ClCompile Include="src\09_the_viewport.cpp" />
+    <ClCompile Include="src\10_color_keying.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

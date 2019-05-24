@@ -147,7 +147,7 @@ SDL_Texture* loadTexture_the_viewport( std::string path )
 	return newTexture;
 }
 
-int main( int argc, char* args[] )
+int main_the_viewport( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_the_viewport() )
