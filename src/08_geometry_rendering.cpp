@@ -1,38 +1,36 @@
 /*This source code copyrighted by Lazy Foo' Productions (2004-2019)
 and may not be redistributed without written permission.*/
 
-//Using SDL, SDL_image, standard IO, and strings
+//Using SDL, SDL_image, standard IO, math, and strings
 #include <SDL.h>
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
+#include <cmath>
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 //Starts up SDL and creates window
-bool init_texture_loading_and_rendering();
+bool init_geometry_rendering();
 
 //Loads media
-bool loadMedia_texture_loading_and_rendering();
+bool loadMedia_geometry_rendering();
 
 //Frees media and shuts down SDL
-void close_texture_loading_and_rendering();
+void close_geometry_rendering();
 
 //Loads individual image as texture
-SDL_Texture* loadTexture_texture_loading_and_rendering( std::string path );
+SDL_Texture* loadTexture_geometry_rendering( std::string path );
 
 //The window we'll be rendering to
-SDL_Window* gWindow_texture_loading_and_rendering = NULL;
+SDL_Window* gWindow_geometry_rendering = NULL;
 
 //The window renderer
-SDL_Renderer* gRenderer_texture_loading_and_rendering = NULL;
+SDL_Renderer* gRenderer_geometry_rendering = NULL;
 
-//Current displayed texture
-SDL_Texture* gTexture_texture_loading_and_rendering = NULL;
-
-bool init_texture_loading_and_rendering()
+bool init_geometry_rendering()
 {
 	//Initialization flag
 	bool success = true;
@@ -52,8 +50,8 @@ bool init_texture_loading_and_rendering()
 		}
 
 		//Create window
-		gWindow_texture_loading_and_rendering = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-		if( gWindow_texture_loading_and_rendering == NULL )
+		gWindow_geometry_rendering = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		if( gWindow_geometry_rendering == NULL )
 		{
 			printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
 			success = false;
@@ -61,8 +59,8 @@ bool init_texture_loading_and_rendering()
 		else
 		{
 			//Create renderer for window
-			gRenderer_texture_loading_and_rendering = SDL_CreateRenderer( gWindow_texture_loading_and_rendering, -1, SDL_RENDERER_ACCELERATED );
-			if( gRenderer_texture_loading_and_rendering == NULL )
+			gRenderer_geometry_rendering = SDL_CreateRenderer( gWindow_geometry_rendering, -1, SDL_RENDERER_ACCELERATED );
+			if( gRenderer_geometry_rendering == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
 				success = false;
@@ -70,7 +68,7 @@ bool init_texture_loading_and_rendering()
 			else
 			{
 				//Initialize renderer color
-				SDL_SetRenderDrawColor( gRenderer_texture_loading_and_rendering, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_SetRenderDrawColor( gRenderer_geometry_rendering, 0xFF, 0xFF, 0xFF, 0xFF );
 
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
@@ -86,40 +84,29 @@ bool init_texture_loading_and_rendering()
 	return success;
 }
 
-bool loadMedia_texture_loading_and_rendering()
+bool loadMedia_geometry_rendering()
 {
 	//Loading success flag
 	bool success = true;
 
-	//Load PNG texture
-	gTexture_texture_loading_and_rendering = loadTexture_texture_loading_and_rendering( "texture.png" );
-	if( gTexture_texture_loading_and_rendering == NULL )
-	{
-		printf( "Failed to load texture image!\n" );
-		success = false;
-	}
-
+	//Nothing to load
 	return success;
 }
 
-void close_texture_loading_and_rendering()
+void close_geometry_rendering()
 {
-	//Free loaded image
-	SDL_DestroyTexture( gTexture_texture_loading_and_rendering);
-	gTexture_texture_loading_and_rendering = NULL;
-
 	//Destroy window	
-	SDL_DestroyRenderer( gRenderer_texture_loading_and_rendering);
-	SDL_DestroyWindow( gWindow_texture_loading_and_rendering);
-	gWindow_texture_loading_and_rendering = NULL;
-	gRenderer_texture_loading_and_rendering = NULL;
+	SDL_DestroyRenderer( gRenderer_geometry_rendering);
+	SDL_DestroyWindow( gWindow_geometry_rendering);
+	gWindow_geometry_rendering = NULL;
+	gRenderer_geometry_rendering = NULL;
 
 	//Quit SDL subsystems
 	IMG_Quit();
 	SDL_Quit();
 }
 
-SDL_Texture* loadTexture_texture_loading_and_rendering( std::string path )
+SDL_Texture* loadTexture( std::string path )
 {
 	//The final texture
 	SDL_Texture* newTexture = NULL;
@@ -133,7 +120,7 @@ SDL_Texture* loadTexture_texture_loading_and_rendering( std::string path )
 	else
 	{
 		//Create texture from surface pixels
-        newTexture = SDL_CreateTextureFromSurface( gRenderer_texture_loading_and_rendering, loadedSurface );
+        newTexture = SDL_CreateTextureFromSurface( gRenderer_geometry_rendering, loadedSurface );
 		if( newTexture == NULL )
 		{
 			printf( "Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError() );
@@ -146,17 +133,17 @@ SDL_Texture* loadTexture_texture_loading_and_rendering( std::string path )
 	return newTexture;
 }
 
-int main_texture_loading_and_rendering( int argc, char* args[] )
+int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
-	if( !init_texture_loading_and_rendering() )
+	if( !init_geometry_rendering() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
 	else
 	{
 		//Load media
-		if( !loadMedia_texture_loading_and_rendering() )
+		if( !loadMedia_geometry_rendering() )
 		{
 			printf( "Failed to load media!\n" );
 		}
@@ -182,19 +169,38 @@ int main_texture_loading_and_rendering( int argc, char* args[] )
 				}
 
 				//Clear screen
-				SDL_RenderClear( gRenderer_texture_loading_and_rendering);
+				SDL_SetRenderDrawColor( gRenderer_geometry_rendering, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_RenderClear( gRenderer_geometry_rendering);
 
-				//Render texture to screen
-				SDL_RenderCopy( gRenderer_texture_loading_and_rendering, gTexture_texture_loading_and_rendering, NULL, NULL );
+				//Render red filled quad
+				SDL_Rect fillRect = { SCREEN_WIDTH / 4, SCREEN_HEIGHT / 4, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
+				SDL_SetRenderDrawColor( gRenderer_geometry_rendering, 0xFF, 0x00, 0x00, 0xFF );
+				SDL_RenderFillRect( gRenderer_geometry_rendering, &fillRect );
+
+				//Render green outlined quad
+				SDL_Rect outlineRect = { SCREEN_WIDTH / 6, SCREEN_HEIGHT / 6, SCREEN_WIDTH * 2 / 3, SCREEN_HEIGHT * 2 / 3 };
+				SDL_SetRenderDrawColor( gRenderer_geometry_rendering, 0x00, 0xFF, 0x00, 0xFF );
+				SDL_RenderDrawRect( gRenderer_geometry_rendering, &outlineRect );
+				
+				//Draw blue horizontal line
+				SDL_SetRenderDrawColor( gRenderer_geometry_rendering, 0x00, 0x00, 0xFF, 0xFF );
+				SDL_RenderDrawLine( gRenderer_geometry_rendering, 0, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT / 2 );
+
+				//Draw vertical line of yellow dots
+				SDL_SetRenderDrawColor( gRenderer_geometry_rendering, 0xFF, 0xFF, 0x00, 0xFF );
+				for( int i = 0; i < SCREEN_HEIGHT; i += 4 )
+				{
+					SDL_RenderDrawPoint( gRenderer_geometry_rendering, SCREEN_WIDTH / 2, i );
+				}
 
 				//Update screen
-				SDL_RenderPresent( gRenderer_texture_loading_and_rendering);
+				SDL_RenderPresent( gRenderer_geometry_rendering);
 			}
 		}
 	}
 
 	//Free resources and close SDL
-	close_texture_loading_and_rendering();
+	close_geometry_rendering();
 
 	return 0;
 }
