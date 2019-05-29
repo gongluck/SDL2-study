@@ -69,5 +69,8 @@
     <ClCompile Include="src\18_key_states.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\19_gamepads_and_joysticks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

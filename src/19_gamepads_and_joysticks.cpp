@@ -1,25 +1,29 @@
 /*This source code copyrighted by Lazy Foo' Productions (2004-2019)
 and may not be redistributed without written permission.*/
 
-//Using SDL, SDL_image, standard IO, and strings
+//Using SDL, SDL_image, standard IO, math, and strings
 #include <SDL.h>
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
+#include <cmath>
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
+//Analog joystick dead zone
+const int JOYSTICK_DEAD_ZONE = 8000;
+
 //Texture wrapper class
-class LTexture_key_states
+class LTexture_gamepads_and_joysticks
 {
 	public:
 		//Initializes variables
-		LTexture_key_states();
+		LTexture_gamepads_and_joysticks();
 
 		//Deallocates memory
-		~LTexture_key_states();
+		~LTexture_gamepads_and_joysticks();
 
 		//Loads image at specified path
 		bool loadFromFile( std::string path );
@@ -28,7 +32,7 @@ class LTexture_key_states
 		//Creates image from font string
 		bool loadFromRenderedText( std::string textureText, SDL_Color textColor );
 		#endif
-		
+
 		//Deallocates texture
 		void free();
 
@@ -58,28 +62,28 @@ class LTexture_key_states
 };
 
 //Starts up SDL and creates window
-bool init_key_states();
+bool init_gamepads_and_joysticks();
 
 //Loads media
-bool loadMedia_key_states();
+bool loadMedia_gamepads_and_joysticks();
 
 //Frees media and shuts down SDL
-void close_key_states();
+void close_gamepads_and_joysticks();
 
 //The window we'll be rendering to
-SDL_Window* gWindow_key_states = NULL;
+SDL_Window* gWindow_gamepads_and_joysticks = NULL;
 
 //The window renderer
-SDL_Renderer* gRenderer_key_states = NULL;
+SDL_Renderer* gRenderer_gamepads_and_joysticks = NULL;
 
 //Scene textures
-LTexture_key_states gPressTexture_key_states;
-LTexture_key_states gUpTexture_key_states;
-LTexture_key_states gDownTexture_key_states;
-LTexture_key_states gLeftTexture_key_states;
-LTexture_key_states gRightTexture_key_states;
+LTexture_gamepads_and_joysticks gArrowTexture_gamepads_and_joysticks;
 
-LTexture_key_states::LTexture_key_states()
+//Game Controller 1 handler
+SDL_Joystick* gGameController_gamepads_and_joysticks = NULL;
+
+
+LTexture_gamepads_and_joysticks::LTexture_gamepads_and_joysticks()
 {
 	//Initialize
 	mTexture = NULL;
@@ -87,13 +91,13 @@ LTexture_key_states::LTexture_key_states()
 	mHeight = 0;
 }
 
-LTexture_key_states::~LTexture_key_states()
+LTexture_gamepads_and_joysticks::~LTexture_gamepads_and_joysticks()
 {
 	//Deallocate
 	free();
 }
 
-bool LTexture_key_states::loadFromFile( std::string path )
+bool LTexture_gamepads_and_joysticks::loadFromFile( std::string path )
 {
 	//Get rid of preexisting texture
 	free();
@@ -113,7 +117,7 @@ bool LTexture_key_states::loadFromFile( std::string path )
 		SDL_SetColorKey( loadedSurface, SDL_TRUE, SDL_MapRGB( loadedSurface->format, 0, 0xFF, 0xFF ) );
 
 		//Create texture from surface pixels
-        newTexture = SDL_CreateTextureFromSurface( gRenderer_key_states, loadedSurface );
+        newTexture = SDL_CreateTextureFromSurface( gRenderer_gamepads_and_joysticks, loadedSurface );
 		if( newTexture == NULL )
 		{
 			printf( "Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError() );
@@ -171,7 +175,7 @@ bool LTexture::loadFromRenderedText( std::string textureText, SDL_Color textColo
 }
 #endif
 
-void LTexture_key_states::free()
+void LTexture_gamepads_and_joysticks::free()
 {
 	//Free texture if it exists
 	if( mTexture != NULL )
@@ -183,25 +187,25 @@ void LTexture_key_states::free()
 	}
 }
 
-void LTexture_key_states::setColor( Uint8 red, Uint8 green, Uint8 blue )
+void LTexture_gamepads_and_joysticks::setColor( Uint8 red, Uint8 green, Uint8 blue )
 {
 	//Modulate texture rgb
 	SDL_SetTextureColorMod( mTexture, red, green, blue );
 }
 
-void LTexture_key_states::setBlendMode( SDL_BlendMode blending )
+void LTexture_gamepads_and_joysticks::setBlendMode( SDL_BlendMode blending )
 {
 	//Set blending function
 	SDL_SetTextureBlendMode( mTexture, blending );
 }
 		
-void LTexture_key_states::setAlpha( Uint8 alpha )
+void LTexture_gamepads_and_joysticks::setAlpha( Uint8 alpha )
 {
 	//Modulate texture alpha
 	SDL_SetTextureAlphaMod( mTexture, alpha );
 }
 
-void LTexture_key_states::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
+void LTexture_gamepads_and_joysticks::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
@@ -214,26 +218,26 @@ void LTexture_key_states::render( int x, int y, SDL_Rect* clip, double angle, SD
 	}
 
 	//Render to screen
-	SDL_RenderCopyEx( gRenderer_key_states, mTexture, clip, &renderQuad, angle, center, flip );
+	SDL_RenderCopyEx( gRenderer_gamepads_and_joysticks, mTexture, clip, &renderQuad, angle, center, flip );
 }
 
-int LTexture_key_states::getWidth()
+int LTexture_gamepads_and_joysticks::getWidth()
 {
 	return mWidth;
 }
 
-int LTexture_key_states::getHeight()
+int LTexture_gamepads_and_joysticks::getHeight()
 {
 	return mHeight;
 }
 
-bool init_key_states()
+bool init_gamepads_and_joysticks()
 {
 	//Initialization flag
 	bool success = true;
 
 	//Initialize SDL
-	if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
+	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK ) < 0 )
 	{
 		printf( "SDL could not initialize! SDL Error: %s\n", SDL_GetError() );
 		success = false;
@@ -246,9 +250,24 @@ bool init_key_states()
 			printf( "Warning: Linear texture filtering not enabled!" );
 		}
 
+		//Check for joysticks
+		if( SDL_NumJoysticks() < 1 )
+		{
+			printf( "Warning: No joysticks connected!\n" );
+		}
+		else
+		{
+			//Load joystick
+			gGameController_gamepads_and_joysticks = SDL_JoystickOpen( 1 );
+			if( gGameController_gamepads_and_joysticks == NULL )
+			{
+				printf( "Warning: Unable to open game controller! SDL Error: %s\n", SDL_GetError() );
+			}
+		}
+
 		//Create window
-		gWindow_key_states = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-		if( gWindow_key_states == NULL )
+		gWindow_gamepads_and_joysticks = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		if( gWindow_gamepads_and_joysticks == NULL )
 		{
 			printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
 			success = false;
@@ -256,8 +275,8 @@ bool init_key_states()
 		else
 		{
 			//Create vsynced renderer for window
-			gRenderer_key_states = SDL_CreateRenderer( gWindow_key_states, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
-			if( gRenderer_key_states == NULL )
+			gRenderer_gamepads_and_joysticks = SDL_CreateRenderer( gWindow_gamepads_and_joysticks, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+			if( gRenderer_gamepads_and_joysticks == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
 				success = false;
@@ -265,7 +284,7 @@ bool init_key_states()
 			else
 			{
 				//Initialize renderer color
-				SDL_SetRenderDrawColor( gRenderer_key_states, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_SetRenderDrawColor( gRenderer_gamepads_and_joysticks, 0xFF, 0xFF, 0xFF, 0xFF );
 
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
@@ -281,80 +300,52 @@ bool init_key_states()
 	return success;
 }
 
-bool loadMedia_key_states()
+bool loadMedia_gamepads_and_joysticks()
 {
 	//Loading success flag
 	bool success = true;
 
-	//Load press texture
-	if( !gPressTexture_key_states.loadFromFile( "press.png" ) )
+	//Load arrow texture
+	if( !gArrowTexture_gamepads_and_joysticks.loadFromFile( "arrow.png" ) )
 	{
-		printf( "Failed to load press texture!\n" );
+		printf( "Failed to load arrow texture!\n" );
 		success = false;
 	}
 	
-	//Load up texture
-	if( !gUpTexture_key_states.loadFromFile( "up.png" ) )
-	{
-		printf( "Failed to load up texture!\n" );
-		success = false;
-	}
-
-	//Load down texture
-	if( !gDownTexture_key_states.loadFromFile( "down.png" ) )
-	{
-		printf( "Failed to load down texture!\n" );
-		success = false;
-	}
-
-	//Load left texture
-	if( !gLeftTexture_key_states.loadFromFile( "left.png" ) )
-	{
-		printf( "Failed to load left texture!\n" );
-		success = false;
-	}
-
-	//Load right texture
-	if( !gRightTexture_key_states.loadFromFile( "right.png" ) )
-	{
-		printf( "Failed to load right texture!\n" );
-		success = false;
-	}
-
 	return success;
 }
 
-void close_key_states()
+void close_gamepads_and_joysticks()
 {
 	//Free loaded images
-	gPressTexture_key_states.free();
-	gUpTexture_key_states.free();
-	gDownTexture_key_states.free();
-	gLeftTexture_key_states.free();
-	gRightTexture_key_states.free();
+	gArrowTexture_gamepads_and_joysticks.free();
+
+	//Close game controller
+	SDL_JoystickClose( gGameController_gamepads_and_joysticks);
+	gGameController_gamepads_and_joysticks = NULL;
 
 	//Destroy window	
-	SDL_DestroyRenderer( gRenderer_key_states);
-	SDL_DestroyWindow( gWindow_key_states);
-	gWindow_key_states = NULL;
-	gRenderer_key_states = NULL;
+	SDL_DestroyRenderer( gRenderer_gamepads_and_joysticks);
+	SDL_DestroyWindow( gWindow_gamepads_and_joysticks);
+	gWindow_gamepads_and_joysticks = NULL;
+	gRenderer_gamepads_and_joysticks = NULL;
 
 	//Quit SDL subsystems
 	IMG_Quit();
 	SDL_Quit();
 }
 
-int main_key_states( int argc, char* args[] )
+int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
-	if( !init_key_states() )
+	if( !init_gamepads_and_joysticks() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
 	else
 	{
 		//Load media
-		if( !loadMedia_key_states() )
+		if( !loadMedia_gamepads_and_joysticks() )
 		{
 			printf( "Failed to load media!\n" );
 		}
@@ -366,8 +357,9 @@ int main_key_states( int argc, char* args[] )
 			//Event handler
 			SDL_Event e;
 
-			//Current rendered texture
-			LTexture_key_states* currentTexture = NULL;
+			//Normalized direction
+			int xDir = 0;
+			int yDir = 0;
 
 			//While application is running
 			while( !quit )
@@ -380,46 +372,75 @@ int main_key_states( int argc, char* args[] )
 					{
 						quit = true;
 					}
-				}
-
-				//Set texture based on current keystate
-				const Uint8* currentKeyStates = SDL_GetKeyboardState( NULL );
-				if( currentKeyStates[ SDL_SCANCODE_UP ] )
-				{
-					currentTexture = &gUpTexture_key_states;
-				}
-				else if( currentKeyStates[ SDL_SCANCODE_DOWN ] )
-				{
-					currentTexture = &gDownTexture_key_states;
-				}
-				else if( currentKeyStates[ SDL_SCANCODE_LEFT ] )
-				{
-					currentTexture = &gLeftTexture_key_states;
-				}
-				else if( currentKeyStates[ SDL_SCANCODE_RIGHT ] )
-				{
-					currentTexture = &gRightTexture_key_states;
-				}
-				else
-				{
-					currentTexture = &gPressTexture_key_states;
+					else if( e.type == SDL_JOYAXISMOTION )
+					{
+						//Motion on controller 0
+						if( e.jaxis.which == 0 )
+						{						
+							//X axis motion
+							if( e.jaxis.axis == 0 )
+							{
+								//Left of dead zone
+								if( e.jaxis.value < -JOYSTICK_DEAD_ZONE )
+								{
+									xDir = -1;
+								}
+								//Right of dead zone
+								else if( e.jaxis.value > JOYSTICK_DEAD_ZONE )
+								{
+									xDir =  1;
+								}
+								else
+								{
+									xDir = 0;
+								}
+							}
+							//Y axis motion
+							else if( e.jaxis.axis == 1 )
+							{
+								//Below of dead zone
+								if( e.jaxis.value < -JOYSTICK_DEAD_ZONE )
+								{
+									yDir = -1;
+								}
+								//Above of dead zone
+								else if( e.jaxis.value > JOYSTICK_DEAD_ZONE )
+								{
+									yDir =  1;
+								}
+								else
+								{
+									yDir = 0;
+								}
+							}
+						}
+					}
 				}
 
 				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer_key_states, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer_key_states);
+				SDL_SetRenderDrawColor( gRenderer_gamepads_and_joysticks, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_RenderClear( gRenderer_gamepads_and_joysticks);
 
-				//Render current texture
-				currentTexture->render( 0, 0 );
+				//Calculate angle
+				double joystickAngle = atan2( (double)yDir, (double)xDir ) * ( 180.0 / M_PI );
+				
+				//Correct angle
+				if( xDir == 0 && yDir == 0 )
+				{
+					joystickAngle = 0;
+				}
+
+				//Render joystick 8 way angle
+				gArrowTexture_gamepads_and_joysticks.render( ( SCREEN_WIDTH - gArrowTexture_gamepads_and_joysticks.getWidth() ) / 2, ( SCREEN_HEIGHT - gArrowTexture_gamepads_and_joysticks.getHeight() ) / 2, NULL, joystickAngle );
 
 				//Update screen
-				SDL_RenderPresent( gRenderer_key_states);
+				SDL_RenderPresent( gRenderer_gamepads_and_joysticks);
 			}
 		}
 	}
 
 	//Free resources and close SDL
-	close_key_states();
+	close_gamepads_and_joysticks();
 
 	return 0;
 }
