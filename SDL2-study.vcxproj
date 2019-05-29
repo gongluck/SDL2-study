@@ -35,6 +35,7 @@
     <ClCompile Include="src\14_animated_sprites_and_vsync.cpp" />
     <ClCompile Include="src\15_rotation_and_flipping.cpp" />
     <ClCompile Include="src\16_true_type_fonts.cpp" />
+    <ClCompile Include="src\17_mouse_events.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

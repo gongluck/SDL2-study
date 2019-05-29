@@ -332,7 +332,7 @@ void close_true_type_fonts()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_true_type_fonts( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_true_type_fonts() )
