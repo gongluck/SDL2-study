@@ -38,6 +38,7 @@
     <ClCompile Include="src\17_mouse_events.cpp" />
     <ClCompile Include="src\18_key_states.cpp" />
     <ClCompile Include="src\19_gamepads_and_joysticks.cpp" />
+    <ClCompile Include="src\20_force_feedback.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
