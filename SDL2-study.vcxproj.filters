@@ -66,5 +66,8 @@
     <ClCompile Include="src\17_mouse_events.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\18_key_states.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

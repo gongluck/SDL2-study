@@ -446,7 +446,7 @@ void close_mouse_events()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_mouse_events( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_mouse_events() )
