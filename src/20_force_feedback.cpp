@@ -351,7 +351,7 @@ void close_force_feedback()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_force_feedback( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_force_feedback() )
