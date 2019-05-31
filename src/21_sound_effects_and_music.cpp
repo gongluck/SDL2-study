@@ -378,7 +378,7 @@ void close_sound_effects_and_music()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_sound_effects_and_music( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_sound_effects_and_music() )
