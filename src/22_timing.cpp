@@ -340,7 +340,7 @@ void close_timing()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_timing( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_timing() )
