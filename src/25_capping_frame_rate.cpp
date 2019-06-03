@@ -462,7 +462,7 @@ void close_capping_frame_rate()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_capping_frame_rate( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_capping_frame_rate() )

@@ -44,6 +44,7 @@
     <ClCompile Include="src\23_advanced_timers.cpp" />
     <ClCompile Include="src\24_calculating_frame_rate.cpp" />
     <ClCompile Include="src\25_capping_frame_rate.cpp" />
+    <ClCompile Include="src\26_motion.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
