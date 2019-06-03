@@ -42,6 +42,7 @@
     <ClCompile Include="src\21_sound_effects_and_music.cpp" />
     <ClCompile Include="src\22_timing.cpp" />
     <ClCompile Include="src\23_advanced_timers.cpp" />
+    <ClCompile Include="src\24_calculating_frame_rate.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

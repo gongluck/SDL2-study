@@ -14,14 +14,14 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 //Texture wrapper class
-class LTexture_advanced_timers
+class LTexture_calculating_frame_rate
 {
 	public:
 		//Initializes variables
-		LTexture_advanced_timers();
+		LTexture_calculating_frame_rate();
 
 		//Deallocates memory
-		~LTexture_advanced_timers();
+		~LTexture_calculating_frame_rate();
 
 		//Loads image at specified path
 		bool loadFromFile( std::string path );
@@ -60,11 +60,11 @@ class LTexture_advanced_timers
 };
 
 //The application time based timer
-class LTimer_advanced_timers
+class LTimer_calculating_frame_rate
 {
     public:
 		//Initializes variables
-		LTimer_advanced_timers();
+		LTimer_calculating_frame_rate();
 
 		//The various clock actions
 		void start();
@@ -92,29 +92,27 @@ class LTimer_advanced_timers
 };
 
 //Starts up SDL and creates window
-bool init_advanced_timers();
+bool init_calculating_frame_rate();
 
 //Loads media
-bool loadMedia_advanced_timers();
+bool loadMedia_calculating_frame_rate();
 
 //Frees media and shuts down SDL
-void close_advanced_timers();
+void close_calculating_frame_rate();
 
 //The window we'll be rendering to
-SDL_Window* gWindow_advanced_timers = NULL;
+SDL_Window* gWindow_calculating_frame_rate = NULL;
 
 //The window renderer
-SDL_Renderer* gRenderer_advanced_timers = NULL;
+SDL_Renderer* gRenderer_calculating_frame_rate = NULL;
 
 //Globally used font
-TTF_Font* gFont_advanced_timers = NULL;
+TTF_Font* gFont_calculating_frame_rate = NULL;
 
 //Scene textures
-LTexture_advanced_timers gTimeTextTexture_advanced_timers;
-LTexture_advanced_timers gPausePromptTexture_advanced_timers;
-LTexture_advanced_timers gStartPromptTexture_advanced_timers;
+LTexture_calculating_frame_rate gFPSTextTexture_calculating_frame_rate;
 
-LTexture_advanced_timers::LTexture_advanced_timers()
+LTexture_calculating_frame_rate::LTexture_calculating_frame_rate()
 {
 	//Initialize
 	mTexture = NULL;
@@ -122,13 +120,13 @@ LTexture_advanced_timers::LTexture_advanced_timers()
 	mHeight = 0;
 }
 
-LTexture_advanced_timers::~LTexture_advanced_timers()
+LTexture_calculating_frame_rate::~LTexture_calculating_frame_rate()
 {
 	//Deallocate
 	free();
 }
 
-bool LTexture_advanced_timers::loadFromFile( std::string path )
+bool LTexture_calculating_frame_rate::loadFromFile( std::string path )
 {
 	//Get rid of preexisting texture
 	free();
@@ -148,7 +146,7 @@ bool LTexture_advanced_timers::loadFromFile( std::string path )
 		SDL_SetColorKey( loadedSurface, SDL_TRUE, SDL_MapRGB( loadedSurface->format, 0, 0xFF, 0xFF ) );
 
 		//Create texture from surface pixels
-        newTexture = SDL_CreateTextureFromSurface( gRenderer_advanced_timers, loadedSurface );
+        newTexture = SDL_CreateTextureFromSurface( gRenderer_calculating_frame_rate, loadedSurface );
 		if( newTexture == NULL )
 		{
 			printf( "Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError() );
@@ -170,17 +168,17 @@ bool LTexture_advanced_timers::loadFromFile( std::string path )
 }
 
 #ifdef SDL_TTF_H_
-bool LTexture_advanced_timers::loadFromRenderedText( std::string textureText, SDL_Color textColor )
+bool LTexture_calculating_frame_rate::loadFromRenderedText( std::string textureText, SDL_Color textColor )
 {
 	//Get rid of preexisting texture
 	free();
 
 	//Render text surface
-	SDL_Surface* textSurface = TTF_RenderText_Solid( gFont_advanced_timers, textureText.c_str(), textColor );
+	SDL_Surface* textSurface = TTF_RenderText_Solid( gFont_calculating_frame_rate, textureText.c_str(), textColor );
 	if( textSurface != NULL )
 	{
 		//Create texture from surface pixels
-        mTexture = SDL_CreateTextureFromSurface( gRenderer_advanced_timers, textSurface );
+        mTexture = SDL_CreateTextureFromSurface( gRenderer_calculating_frame_rate, textSurface );
 		if( mTexture == NULL )
 		{
 			printf( "Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError() );
@@ -206,7 +204,7 @@ bool LTexture_advanced_timers::loadFromRenderedText( std::string textureText, SD
 }
 #endif
 
-void LTexture_advanced_timers::free()
+void LTexture_calculating_frame_rate::free()
 {
 	//Free texture if it exists
 	if( mTexture != NULL )
@@ -218,25 +216,25 @@ void LTexture_advanced_timers::free()
 	}
 }
 
-void LTexture_advanced_timers::setColor( Uint8 red, Uint8 green, Uint8 blue )
+void LTexture_calculating_frame_rate::setColor( Uint8 red, Uint8 green, Uint8 blue )
 {
 	//Modulate texture rgb
 	SDL_SetTextureColorMod( mTexture, red, green, blue );
 }
 
-void LTexture_advanced_timers::setBlendMode( SDL_BlendMode blending )
+void LTexture_calculating_frame_rate::setBlendMode( SDL_BlendMode blending )
 {
 	//Set blending function
 	SDL_SetTextureBlendMode( mTexture, blending );
 }
 		
-void LTexture_advanced_timers::setAlpha( Uint8 alpha )
+void LTexture_calculating_frame_rate::setAlpha( Uint8 alpha )
 {
 	//Modulate texture alpha
 	SDL_SetTextureAlphaMod( mTexture, alpha );
 }
 
-void LTexture_advanced_timers::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
+void LTexture_calculating_frame_rate::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
@@ -249,20 +247,20 @@ void LTexture_advanced_timers::render( int x, int y, SDL_Rect* clip, double angl
 	}
 
 	//Render to screen
-	SDL_RenderCopyEx( gRenderer_advanced_timers, mTexture, clip, &renderQuad, angle, center, flip );
+	SDL_RenderCopyEx( gRenderer_calculating_frame_rate, mTexture, clip, &renderQuad, angle, center, flip );
 }
 
-int LTexture_advanced_timers::getWidth()
+int LTexture_calculating_frame_rate::getWidth()
 {
 	return mWidth;
 }
 
-int LTexture_advanced_timers::getHeight()
+int LTexture_calculating_frame_rate::getHeight()
 {
 	return mHeight;
 }
 
-LTimer_advanced_timers::LTimer_advanced_timers()
+LTimer_calculating_frame_rate::LTimer_calculating_frame_rate()
 {
     //Initialize the variables
     mStartTicks = 0;
@@ -272,7 +270,7 @@ LTimer_advanced_timers::LTimer_advanced_timers()
     mStarted = false;
 }
 
-void LTimer_advanced_timers::start()
+void LTimer_calculating_frame_rate::start()
 {
     //Start the timer
     mStarted = true;
@@ -285,7 +283,7 @@ void LTimer_advanced_timers::start()
 	mPausedTicks = 0;
 }
 
-void LTimer_advanced_timers::stop()
+void LTimer_calculating_frame_rate::stop()
 {
     //Stop the timer
     mStarted = false;
@@ -298,7 +296,7 @@ void LTimer_advanced_timers::stop()
 	mPausedTicks = 0;
 }
 
-void LTimer_advanced_timers::pause()
+void LTimer_calculating_frame_rate::pause()
 {
     //If the timer is running and isn't already paused
     if( mStarted && !mPaused )
@@ -312,7 +310,7 @@ void LTimer_advanced_timers::pause()
     }
 }
 
-void LTimer_advanced_timers::unpause()
+void LTimer_calculating_frame_rate::unpause()
 {
     //If the timer is running and paused
     if( mStarted && mPaused )
@@ -328,7 +326,7 @@ void LTimer_advanced_timers::unpause()
     }
 }
 
-Uint32 LTimer_advanced_timers::getTicks()
+Uint32 LTimer_calculating_frame_rate::getTicks()
 {
 	//The actual timer time
 	Uint32 time = 0;
@@ -352,19 +350,19 @@ Uint32 LTimer_advanced_timers::getTicks()
     return time;
 }
 
-bool LTimer_advanced_timers::isStarted()
+bool LTimer_calculating_frame_rate::isStarted()
 {
 	//Timer is running and paused or unpaused
     return mStarted;
 }
 
-bool LTimer_advanced_timers::isPaused()
+bool LTimer_calculating_frame_rate::isPaused()
 {
 	//Timer is running and paused
     return mPaused && mStarted;
 }
 
-bool init_advanced_timers()
+bool init_calculating_frame_rate()
 {
 	//Initialization flag
 	bool success = true;
@@ -384,8 +382,8 @@ bool init_advanced_timers()
 		}
 
 		//Create window
-		gWindow_advanced_timers = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-		if( gWindow_advanced_timers == NULL )
+		gWindow_calculating_frame_rate = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		if( gWindow_calculating_frame_rate == NULL )
 		{
 			printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
 			success = false;
@@ -393,8 +391,8 @@ bool init_advanced_timers()
 		else
 		{
 			//Create vsynced renderer for window
-			gRenderer_advanced_timers = SDL_CreateRenderer( gWindow_advanced_timers, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
-			if( gRenderer_advanced_timers == NULL )
+			gRenderer_calculating_frame_rate = SDL_CreateRenderer( gWindow_calculating_frame_rate, -1, SDL_RENDERER_ACCELERATED );
+			if( gRenderer_calculating_frame_rate == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
 				success = false;
@@ -402,7 +400,7 @@ bool init_advanced_timers()
 			else
 			{
 				//Initialize renderer color
-				SDL_SetRenderDrawColor( gRenderer_advanced_timers, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_SetRenderDrawColor( gRenderer_calculating_frame_rate, 0xFF, 0xFF, 0xFF, 0xFF );
 
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
@@ -425,57 +423,36 @@ bool init_advanced_timers()
 	return success;
 }
 
-bool loadMedia_advanced_timers()
+bool loadMedia_calculating_frame_rate()
 {
 	//Loading success flag
 	bool success = true;
 
 	//Open the font
-	gFont_advanced_timers = TTF_OpenFont( "lazy.ttf", 28 );
-	if( gFont_advanced_timers == NULL )
+	gFont_calculating_frame_rate = TTF_OpenFont( "lazy.ttf", 28 );
+	if( gFont_calculating_frame_rate == NULL )
 	{
 		printf( "Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError() );
 		success = false;
-	}
-	else
-	{
-		//Set text color as black
-		SDL_Color textColor = { 0, 0, 0, 255 };
-		
-		//Load stop prompt texture
-		if( !gStartPromptTexture_advanced_timers.loadFromRenderedText( "Press S to Start or Stop the Timer", textColor ) )
-		{
-			printf( "Unable to render start/stop prompt texture!\n" );
-			success = false;
-		}
-		
-		//Load pause prompt texture
-		if( !gPausePromptTexture_advanced_timers.loadFromRenderedText( "Press P to Pause or Unpause the Timer", textColor ) )
-		{
-			printf( "Unable to render pause/unpause prompt texture!\n" );
-			success = false;
-		}
 	}
 
 	return success;
 }
 
-void close_advanced_timers()
+void close_calculating_frame_rate()
 {
 	//Free loaded images
-	gTimeTextTexture_advanced_timers.free();
-	gStartPromptTexture_advanced_timers.free();
-	gPausePromptTexture_advanced_timers.free();
+	gFPSTextTexture_calculating_frame_rate.free();
 
 	//Free global font
-	TTF_CloseFont( gFont_advanced_timers);
-	gFont_advanced_timers = NULL;
+	TTF_CloseFont( gFont_calculating_frame_rate);
+	gFont_calculating_frame_rate = NULL;
 
 	//Destroy window	
-	SDL_DestroyRenderer( gRenderer_advanced_timers);
-	SDL_DestroyWindow( gWindow_advanced_timers);
-	gWindow_advanced_timers = NULL;
-	gRenderer_advanced_timers = NULL;
+	SDL_DestroyRenderer( gRenderer_calculating_frame_rate);
+	SDL_DestroyWindow( gWindow_calculating_frame_rate);
+	gWindow_calculating_frame_rate = NULL;
+	gRenderer_calculating_frame_rate = NULL;
 
 	//Quit SDL subsystems
 	TTF_Quit();
@@ -483,17 +460,17 @@ void close_advanced_timers()
 	SDL_Quit();
 }
 
-int main_advanced_timers( int argc, char* args[] )
+int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
-	if( !init_advanced_timers() )
+	if( !init_calculating_frame_rate() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
 	else
 	{
 		//Load media
-		if( !loadMedia_advanced_timers() )
+		if( !loadMedia_calculating_frame_rate() )
 		{
 			printf( "Failed to load media!\n" );
 		}
@@ -508,11 +485,15 @@ int main_advanced_timers( int argc, char* args[] )
 			//Set text color as black
 			SDL_Color textColor = { 0, 0, 0, 255 };
 
-			//The application timer
-			LTimer_advanced_timers timer;
+			//The frames per second timer
+			LTimer_calculating_frame_rate fpsTimer;
 
 			//In memory text stream
 			std::stringstream timeText;
+
+			//Start counting frames per second
+			int countedFrames = 0;
+			fpsTimer.start();
 
 			//While application is running
 			while( !quit )
@@ -525,63 +506,41 @@ int main_advanced_timers( int argc, char* args[] )
 					{
 						quit = true;
 					}
-					//Reset start time on return keypress
-					else if( e.type == SDL_KEYDOWN )
-					{
-						//Start/stop
-						if( e.key.keysym.sym == SDLK_s )
-						{
-							if( timer.isStarted() )
-							{
-								timer.stop();
-							}
-							else
-							{
-								timer.start();
-							}
-						}
-						//Pause/unpause
-						else if( e.key.keysym.sym == SDLK_p )
-						{
-							if( timer.isPaused() )
-							{
-								timer.unpause();
-							}
-							else
-							{
-								timer.pause();
-							}
-						}
-					}
 				}
 
+				//Calculate and correct fps
+				float avgFPS = countedFrames / ( fpsTimer.getTicks() / 1000.f );
+				if( avgFPS > 2000000 )
+				{
+					avgFPS = 0;
+				}
+				
 				//Set text to be rendered
 				timeText.str( "" );
-				timeText << "Seconds since start time " << ( timer.getTicks() / 1000.f ) ; 
+				timeText << "Average Frames Per Second " << avgFPS; 
 
 				//Render text
-				if( !gTimeTextTexture_advanced_timers.loadFromRenderedText( timeText.str().c_str(), textColor ) )
+				if( !gFPSTextTexture_calculating_frame_rate.loadFromRenderedText( timeText.str().c_str(), textColor ) )
 				{
-					printf( "Unable to render time texture!\n" );
+					printf( "Unable to render FPS texture!\n" );
 				}
 
 				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer_advanced_timers, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer_advanced_timers);
+				SDL_SetRenderDrawColor( gRenderer_calculating_frame_rate, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_RenderClear( gRenderer_calculating_frame_rate);
 
 				//Render textures
-				gStartPromptTexture_advanced_timers.render( ( SCREEN_WIDTH - gStartPromptTexture_advanced_timers.getWidth() ) / 2, 0 );
-				gPausePromptTexture_advanced_timers.render( ( SCREEN_WIDTH - gPausePromptTexture_advanced_timers.getWidth() ) / 2, gStartPromptTexture_advanced_timers.getHeight() );
-				gTimeTextTexture_advanced_timers.render( ( SCREEN_WIDTH - gTimeTextTexture_advanced_timers.getWidth() ) / 2, ( SCREEN_HEIGHT - gTimeTextTexture_advanced_timers.getHeight() ) / 2 );
+				gFPSTextTexture_calculating_frame_rate.render( ( SCREEN_WIDTH - gFPSTextTexture_calculating_frame_rate.getWidth() ) / 2, ( SCREEN_HEIGHT - gFPSTextTexture_calculating_frame_rate.getHeight() ) / 2 );
 
 				//Update screen
-				SDL_RenderPresent( gRenderer_advanced_timers);
+				SDL_RenderPresent( gRenderer_calculating_frame_rate);
+				++countedFrames;
 			}
 		}
 	}
 
 	//Free resources and close SDL
-	close_advanced_timers();
+	close_calculating_frame_rate();
 
 	return 0;
 }
