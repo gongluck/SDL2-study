@@ -7,23 +7,19 @@ and may not be redistributed without written permission.*/
 #include <stdio.h>
 #include <string>
 
-//The dimensions of the level
-const int LEVEL_WIDTH = 1280;
-const int LEVEL_HEIGHT = 960;
-
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 //Texture wrapper class
-class LTexture_scrolling
+class LTexture_scrolling_backgrounds
 {
 	public:
 		//Initializes variables
-		LTexture_scrolling();
+		LTexture_scrolling_backgrounds();
 
 		//Deallocates memory
-		~LTexture_scrolling();
+		~LTexture_scrolling_backgrounds();
 
 		//Loads image at specified path
 		bool loadFromFile( std::string path );
@@ -62,7 +58,7 @@ class LTexture_scrolling
 };
 
 //The dot that will move around on the screen
-class Dot_scrolling
+class Dot_scrolling_backgrounds
 {
     public:
 		//The dimensions of the dot
@@ -73,7 +69,7 @@ class Dot_scrolling
 		static const int DOT_VEL = 10;
 
 		//Initializes the variables
-		Dot_scrolling();
+		Dot_scrolling_backgrounds();
 
 		//Takes key presses and adjusts the dot's velocity
 		void handleEvent( SDL_Event& e );
@@ -81,12 +77,8 @@ class Dot_scrolling
 		//Moves the dot
 		void move();
 
-		//Shows the dot on the screen relative to the camera
-		void render( int camX, int camY );
-
-		//Position accessors
-		int getPosX();
-		int getPosY();
+		//Shows the dot on the screen
+		void render();
 
     private:
 		//The X and Y offsets of the dot
@@ -97,25 +89,25 @@ class Dot_scrolling
 };
 
 //Starts up SDL and creates window
-bool init_scrolling();
+bool init_scrolling_backgrounds();
 
 //Loads media
-bool loadMedia_scrolling();
+bool loadMedia_scrolling_backgrounds();
 
 //Frees media and shuts down SDL
-void close_scrolling();
+void close_scrolling_backgrounds();
 
 //The window we'll be rendering to
-SDL_Window* gWindow_scrolling = NULL;
+SDL_Window* gWindow_scrolling_backgrounds = NULL;
 
 //The window renderer
-SDL_Renderer* gRenderer_scrolling = NULL;
+SDL_Renderer* gRenderer_scrolling_backgrounds = NULL;
 
 //Scene textures
-LTexture_scrolling gDotTexture_scrolling;
-LTexture_scrolling gBGTexture_scrolling;
+LTexture_scrolling_backgrounds gDotTexture_scrolling_backgrounds;
+LTexture_scrolling_backgrounds gBGTexture_scrolling_backgrounds;
 
-LTexture_scrolling::LTexture_scrolling()
+LTexture_scrolling_backgrounds::LTexture_scrolling_backgrounds()
 {
 	//Initialize
 	mTexture = NULL;
@@ -123,13 +115,13 @@ LTexture_scrolling::LTexture_scrolling()
 	mHeight = 0;
 }
 
-LTexture_scrolling::~LTexture_scrolling()
+LTexture_scrolling_backgrounds::~LTexture_scrolling_backgrounds()
 {
 	//Deallocate
 	free();
 }
 
-bool LTexture_scrolling::loadFromFile( std::string path )
+bool LTexture_scrolling_backgrounds::loadFromFile( std::string path )
 {
 	//Get rid of preexisting texture
 	free();
@@ -149,7 +141,7 @@ bool LTexture_scrolling::loadFromFile( std::string path )
 		SDL_SetColorKey( loadedSurface, SDL_TRUE, SDL_MapRGB( loadedSurface->format, 0, 0xFF, 0xFF ) );
 
 		//Create texture from surface pixels
-        newTexture = SDL_CreateTextureFromSurface( gRenderer_scrolling, loadedSurface );
+        newTexture = SDL_CreateTextureFromSurface( gRenderer_scrolling_backgrounds, loadedSurface );
 		if( newTexture == NULL )
 		{
 			printf( "Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError() );
@@ -207,7 +199,7 @@ bool LTexture::loadFromRenderedText( std::string textureText, SDL_Color textColo
 }
 #endif
 
-void LTexture_scrolling::free()
+void LTexture_scrolling_backgrounds::free()
 {
 	//Free texture if it exists
 	if( mTexture != NULL )
@@ -219,25 +211,25 @@ void LTexture_scrolling::free()
 	}
 }
 
-void LTexture_scrolling::setColor( Uint8 red, Uint8 green, Uint8 blue )
+void LTexture_scrolling_backgrounds::setColor( Uint8 red, Uint8 green, Uint8 blue )
 {
 	//Modulate texture rgb
 	SDL_SetTextureColorMod( mTexture, red, green, blue );
 }
 
-void LTexture_scrolling::setBlendMode( SDL_BlendMode blending )
+void LTexture_scrolling_backgrounds::setBlendMode( SDL_BlendMode blending )
 {
 	//Set blending function
 	SDL_SetTextureBlendMode( mTexture, blending );
 }
 		
-void LTexture_scrolling::setAlpha( Uint8 alpha )
+void LTexture_scrolling_backgrounds::setAlpha( Uint8 alpha )
 {
 	//Modulate texture alpha
 	SDL_SetTextureAlphaMod( mTexture, alpha );
 }
 
-void LTexture_scrolling::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
+void LTexture_scrolling_backgrounds::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
@@ -250,20 +242,20 @@ void LTexture_scrolling::render( int x, int y, SDL_Rect* clip, double angle, SDL
 	}
 
 	//Render to screen
-	SDL_RenderCopyEx( gRenderer_scrolling, mTexture, clip, &renderQuad, angle, center, flip );
+	SDL_RenderCopyEx( gRenderer_scrolling_backgrounds, mTexture, clip, &renderQuad, angle, center, flip );
 }
 
-int LTexture_scrolling::getWidth()
+int LTexture_scrolling_backgrounds::getWidth()
 {
 	return mWidth;
 }
 
-int LTexture_scrolling::getHeight()
+int LTexture_scrolling_backgrounds::getHeight()
 {
 	return mHeight;
 }
 
-Dot_scrolling::Dot_scrolling()
+Dot_scrolling_backgrounds::Dot_scrolling_backgrounds()
 {
     //Initialize the offsets
     mPosX = 0;
@@ -274,7 +266,7 @@ Dot_scrolling::Dot_scrolling()
     mVelY = 0;
 }
 
-void Dot_scrolling::handleEvent( SDL_Event& e )
+void Dot_scrolling_backgrounds::handleEvent( SDL_Event& e )
 {
     //If a key was pressed
 	if( e.type == SDL_KEYDOWN && e.key.repeat == 0 )
@@ -302,13 +294,13 @@ void Dot_scrolling::handleEvent( SDL_Event& e )
     }
 }
 
-void Dot_scrolling::move()
+void Dot_scrolling_backgrounds::move()
 {
     //Move the dot left or right
     mPosX += mVelX;
 
     //If the dot went too far to the left or right
-    if( ( mPosX < 0 ) || ( mPosX + DOT_WIDTH > LEVEL_WIDTH ) )
+    if( ( mPosX < 0 ) || ( mPosX + DOT_WIDTH > SCREEN_WIDTH ) )
     {
         //Move back
         mPosX -= mVelX;
@@ -318,30 +310,20 @@ void Dot_scrolling::move()
     mPosY += mVelY;
 
     //If the dot went too far up or down
-    if( ( mPosY < 0 ) || ( mPosY + DOT_HEIGHT > LEVEL_HEIGHT ) )
+    if( ( mPosY < 0 ) || ( mPosY + DOT_HEIGHT > SCREEN_HEIGHT ) )
     {
         //Move back
         mPosY -= mVelY;
     }
 }
 
-void Dot_scrolling::render( int camX, int camY )
+void Dot_scrolling_backgrounds::render()
 {
-    //Show the dot relative to the camera
-	gDotTexture_scrolling.render( mPosX - camX, mPosY - camY );
+    //Show the dot
+	gDotTexture_scrolling_backgrounds.render( mPosX, mPosY );
 }
 
-int Dot_scrolling::getPosX()
-{
-	return mPosX;
-}
-
-int Dot_scrolling::getPosY()
-{
-	return mPosY;
-}
-
-bool init_scrolling()
+bool init_scrolling_backgrounds()
 {
 	//Initialization flag
 	bool success = true;
@@ -361,8 +343,8 @@ bool init_scrolling()
 		}
 
 		//Create window
-		gWindow_scrolling = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-		if( gWindow_scrolling == NULL )
+		gWindow_scrolling_backgrounds = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		if( gWindow_scrolling_backgrounds == NULL )
 		{
 			printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
 			success = false;
@@ -370,8 +352,8 @@ bool init_scrolling()
 		else
 		{
 			//Create vsynced renderer for window
-			gRenderer_scrolling = SDL_CreateRenderer( gWindow_scrolling, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
-			if( gRenderer_scrolling == NULL )
+			gRenderer_scrolling_backgrounds = SDL_CreateRenderer( gWindow_scrolling_backgrounds, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+			if( gRenderer_scrolling_backgrounds == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
 				success = false;
@@ -379,7 +361,7 @@ bool init_scrolling()
 			else
 			{
 				//Initialize renderer color
-				SDL_SetRenderDrawColor( gRenderer_scrolling, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_SetRenderDrawColor( gRenderer_scrolling_backgrounds, 0xFF, 0xFF, 0xFF, 0xFF );
 
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
@@ -395,20 +377,20 @@ bool init_scrolling()
 	return success;
 }
 
-bool loadMedia_scrolling()
+bool loadMedia_scrolling_backgrounds()
 {
 	//Loading success flag
 	bool success = true;
 
 	//Load dot texture
-	if( !gDotTexture_scrolling.loadFromFile( "dot.bmp" ) )
+	if( !gDotTexture_scrolling_backgrounds.loadFromFile( "dot.bmp" ) )
 	{
 		printf( "Failed to load dot texture!\n" );
 		success = false;
 	}
 
 	//Load background texture
-	if( !gBGTexture_scrolling.loadFromFile( "bg.png" ) )
+	if( !gBGTexture_scrolling_backgrounds.loadFromFile( "bg.png" ) )
 	{
 		printf( "Failed to load background texture!\n" );
 		success = false;
@@ -417,34 +399,34 @@ bool loadMedia_scrolling()
 	return success;
 }
 
-void close_scrolling()
+void close_scrolling_backgrounds()
 {
 	//Free loaded images
-	gDotTexture_scrolling.free();
-	gBGTexture_scrolling.free();
+	gDotTexture_scrolling_backgrounds.free();
+	gBGTexture_scrolling_backgrounds.free();
 
 	//Destroy window	
-	SDL_DestroyRenderer( gRenderer_scrolling);
-	SDL_DestroyWindow( gWindow_scrolling);
-	gWindow_scrolling = NULL;
-	gRenderer_scrolling = NULL;
+	SDL_DestroyRenderer( gRenderer_scrolling_backgrounds);
+	SDL_DestroyWindow( gWindow_scrolling_backgrounds);
+	gWindow_scrolling_backgrounds = NULL;
+	gRenderer_scrolling_backgrounds = NULL;
 
 	//Quit SDL subsystems
 	IMG_Quit();
 	SDL_Quit();
 }
 
-int main_scrolling( int argc, char* args[] )
+int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
-	if( !init_scrolling() )
+	if( !init_scrolling_backgrounds() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
 	else
 	{
 		//Load media
-		if( !loadMedia_scrolling() )
+		if( !loadMedia_scrolling_backgrounds() )
 		{
 			printf( "Failed to load media!\n" );
 		}
@@ -457,10 +439,10 @@ int main_scrolling( int argc, char* args[] )
 			SDL_Event e;
 
 			//The dot that will be moving around on the screen
-			Dot_scrolling dot;
+			Dot_scrolling_backgrounds dot;
 
-			//The camera area
-			SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+			//The background scrolling offset
+			int scrollingOffset = 0;
 
 			//While application is running
 			while( !quit )
@@ -481,46 +463,32 @@ int main_scrolling( int argc, char* args[] )
 				//Move the dot
 				dot.move();
 
-				//Center the camera over the dot
-				camera.x = ( dot.getPosX() + Dot_scrolling::DOT_WIDTH / 2 ) - SCREEN_WIDTH / 2;
-				camera.y = ( dot.getPosY() + Dot_scrolling::DOT_HEIGHT / 2 ) - SCREEN_HEIGHT / 2;
-
-				//Keep the camera in bounds
-				if( camera.x < 0 )
-				{ 
-					camera.x = 0;
-				}
-				if( camera.y < 0 )
+				//Scroll background
+				--scrollingOffset;
+				if( scrollingOffset < -gBGTexture_scrolling_backgrounds.getWidth() )
 				{
-					camera.y = 0;
-				}
-				if( camera.x > LEVEL_WIDTH - camera.w )
-				{
-					camera.x = LEVEL_WIDTH - camera.w;
-				}
-				if( camera.y > LEVEL_HEIGHT - camera.h )
-				{
-					camera.y = LEVEL_HEIGHT - camera.h;
+					scrollingOffset = 0;
 				}
 
 				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer_scrolling, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer_scrolling);
+				SDL_SetRenderDrawColor( gRenderer_scrolling_backgrounds, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_RenderClear( gRenderer_scrolling_backgrounds);
 
 				//Render background
-				gBGTexture_scrolling.render( 0, 0, &camera );
+				gBGTexture_scrolling_backgrounds.render( scrollingOffset, 0 );
+				gBGTexture_scrolling_backgrounds.render( scrollingOffset + gBGTexture_scrolling_backgrounds.getWidth(), 0 );
 
 				//Render objects
-				dot.render( camera.x, camera.y );
+				dot.render();
 
 				//Update screen
-				SDL_RenderPresent( gRenderer_scrolling);
+				SDL_RenderPresent( gRenderer_scrolling_backgrounds);
 			}
 		}
 	}
 
 	//Free resources and close SDL
-	close_scrolling();
+	close_scrolling_backgrounds();
 
 	return 0;
 }
