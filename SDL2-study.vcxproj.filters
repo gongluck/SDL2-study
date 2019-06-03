@@ -87,5 +87,8 @@
     <ClCompile Include="src\24_calculating_frame_rate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\25_capping_frame_rate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

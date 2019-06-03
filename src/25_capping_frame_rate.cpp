@@ -12,16 +12,18 @@ and may not be redistributed without written permission.*/
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
+const int SCREEN_FPS = 60;
+const int SCREEN_TICK_PER_FRAME = 1000 / SCREEN_FPS;
 
 //Texture wrapper class
-class LTexture_calculating_frame_rate
+class LTexture_capping_frame_rate
 {
 	public:
 		//Initializes variables
-		LTexture_calculating_frame_rate();
+		LTexture_capping_frame_rate();
 
 		//Deallocates memory
-		~LTexture_calculating_frame_rate();
+		~LTexture_capping_frame_rate();
 
 		//Loads image at specified path
 		bool loadFromFile( std::string path );
@@ -60,11 +62,11 @@ class LTexture_calculating_frame_rate
 };
 
 //The application time based timer
-class LTimer_calculating_frame_rate
+class LTimer_capping_frame_rate
 {
     public:
 		//Initializes variables
-		LTimer_calculating_frame_rate();
+		LTimer_capping_frame_rate();
 
 		//The various clock actions
 		void start();
@@ -92,27 +94,27 @@ class LTimer_calculating_frame_rate
 };
 
 //Starts up SDL and creates window
-bool init_calculating_frame_rate();
+bool init_capping_frame_rate();
 
 //Loads media
-bool loadMedia_calculating_frame_rate();
+bool loadMedia_capping_frame_rate();
 
 //Frees media and shuts down SDL
-void close_calculating_frame_rate();
+void close_capping_frame_rate();
 
 //The window we'll be rendering to
-SDL_Window* gWindow_calculating_frame_rate = NULL;
+SDL_Window* gWindow_capping_frame_rate = NULL;
 
 //The window renderer
-SDL_Renderer* gRenderer_calculating_frame_rate = NULL;
+SDL_Renderer* gRenderer_capping_frame_rate = NULL;
 
 //Globally used font
-TTF_Font* gFont_calculating_frame_rate = NULL;
+TTF_Font* gFont_capping_frame_rate = NULL;
 
 //Scene textures
-LTexture_calculating_frame_rate gFPSTextTexture_calculating_frame_rate;
+LTexture_capping_frame_rate gFPSTextTexture_capping_frame_rate;
 
-LTexture_calculating_frame_rate::LTexture_calculating_frame_rate()
+LTexture_capping_frame_rate::LTexture_capping_frame_rate()
 {
 	//Initialize
 	mTexture = NULL;
@@ -120,13 +122,13 @@ LTexture_calculating_frame_rate::LTexture_calculating_frame_rate()
 	mHeight = 0;
 }
 
-LTexture_calculating_frame_rate::~LTexture_calculating_frame_rate()
+LTexture_capping_frame_rate::~LTexture_capping_frame_rate()
 {
 	//Deallocate
 	free();
 }
 
-bool LTexture_calculating_frame_rate::loadFromFile( std::string path )
+bool LTexture_capping_frame_rate::loadFromFile( std::string path )
 {
 	//Get rid of preexisting texture
 	free();
@@ -146,7 +148,7 @@ bool LTexture_calculating_frame_rate::loadFromFile( std::string path )
 		SDL_SetColorKey( loadedSurface, SDL_TRUE, SDL_MapRGB( loadedSurface->format, 0, 0xFF, 0xFF ) );
 
 		//Create texture from surface pixels
-        newTexture = SDL_CreateTextureFromSurface( gRenderer_calculating_frame_rate, loadedSurface );
+        newTexture = SDL_CreateTextureFromSurface( gRenderer_capping_frame_rate, loadedSurface );
 		if( newTexture == NULL )
 		{
 			printf( "Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError() );
@@ -168,17 +170,17 @@ bool LTexture_calculating_frame_rate::loadFromFile( std::string path )
 }
 
 #ifdef SDL_TTF_H_
-bool LTexture_calculating_frame_rate::loadFromRenderedText( std::string textureText, SDL_Color textColor )
+bool LTexture_capping_frame_rate::loadFromRenderedText( std::string textureText, SDL_Color textColor )
 {
 	//Get rid of preexisting texture
 	free();
 
 	//Render text surface
-	SDL_Surface* textSurface = TTF_RenderText_Solid( gFont_calculating_frame_rate, textureText.c_str(), textColor );
+	SDL_Surface* textSurface = TTF_RenderText_Solid( gFont_capping_frame_rate, textureText.c_str(), textColor );
 	if( textSurface != NULL )
 	{
 		//Create texture from surface pixels
-        mTexture = SDL_CreateTextureFromSurface( gRenderer_calculating_frame_rate, textSurface );
+        mTexture = SDL_CreateTextureFromSurface( gRenderer_capping_frame_rate, textSurface );
 		if( mTexture == NULL )
 		{
 			printf( "Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError() );
@@ -204,7 +206,7 @@ bool LTexture_calculating_frame_rate::loadFromRenderedText( std::string textureT
 }
 #endif
 
-void LTexture_calculating_frame_rate::free()
+void LTexture_capping_frame_rate::free()
 {
 	//Free texture if it exists
 	if( mTexture != NULL )
@@ -216,25 +218,25 @@ void LTexture_calculating_frame_rate::free()
 	}
 }
 
-void LTexture_calculating_frame_rate::setColor( Uint8 red, Uint8 green, Uint8 blue )
+void LTexture_capping_frame_rate::setColor( Uint8 red, Uint8 green, Uint8 blue )
 {
 	//Modulate texture rgb
 	SDL_SetTextureColorMod( mTexture, red, green, blue );
 }
 
-void LTexture_calculating_frame_rate::setBlendMode( SDL_BlendMode blending )
+void LTexture_capping_frame_rate::setBlendMode( SDL_BlendMode blending )
 {
 	//Set blending function
 	SDL_SetTextureBlendMode( mTexture, blending );
 }
 		
-void LTexture_calculating_frame_rate::setAlpha( Uint8 alpha )
+void LTexture_capping_frame_rate::setAlpha( Uint8 alpha )
 {
 	//Modulate texture alpha
 	SDL_SetTextureAlphaMod( mTexture, alpha );
 }
 
-void LTexture_calculating_frame_rate::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
+void LTexture_capping_frame_rate::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
@@ -247,20 +249,20 @@ void LTexture_calculating_frame_rate::render( int x, int y, SDL_Rect* clip, doub
 	}
 
 	//Render to screen
-	SDL_RenderCopyEx( gRenderer_calculating_frame_rate, mTexture, clip, &renderQuad, angle, center, flip );
+	SDL_RenderCopyEx( gRenderer_capping_frame_rate, mTexture, clip, &renderQuad, angle, center, flip );
 }
 
-int LTexture_calculating_frame_rate::getWidth()
+int LTexture_capping_frame_rate::getWidth()
 {
 	return mWidth;
 }
 
-int LTexture_calculating_frame_rate::getHeight()
+int LTexture_capping_frame_rate::getHeight()
 {
 	return mHeight;
 }
 
-LTimer_calculating_frame_rate::LTimer_calculating_frame_rate()
+LTimer_capping_frame_rate::LTimer_capping_frame_rate()
 {
     //Initialize the variables
     mStartTicks = 0;
@@ -270,7 +272,7 @@ LTimer_calculating_frame_rate::LTimer_calculating_frame_rate()
     mStarted = false;
 }
 
-void LTimer_calculating_frame_rate::start()
+void LTimer_capping_frame_rate::start()
 {
     //Start the timer
     mStarted = true;
@@ -283,7 +285,7 @@ void LTimer_calculating_frame_rate::start()
 	mPausedTicks = 0;
 }
 
-void LTimer_calculating_frame_rate::stop()
+void LTimer_capping_frame_rate::stop()
 {
     //Stop the timer
     mStarted = false;
@@ -296,7 +298,7 @@ void LTimer_calculating_frame_rate::stop()
 	mPausedTicks = 0;
 }
 
-void LTimer_calculating_frame_rate::pause()
+void LTimer_capping_frame_rate::pause()
 {
     //If the timer is running and isn't already paused
     if( mStarted && !mPaused )
@@ -310,7 +312,7 @@ void LTimer_calculating_frame_rate::pause()
     }
 }
 
-void LTimer_calculating_frame_rate::unpause()
+void LTimer_capping_frame_rate::unpause()
 {
     //If the timer is running and paused
     if( mStarted && mPaused )
@@ -326,7 +328,7 @@ void LTimer_calculating_frame_rate::unpause()
     }
 }
 
-Uint32 LTimer_calculating_frame_rate::getTicks()
+Uint32 LTimer_capping_frame_rate::getTicks()
 {
 	//The actual timer time
 	Uint32 time = 0;
@@ -350,19 +352,19 @@ Uint32 LTimer_calculating_frame_rate::getTicks()
     return time;
 }
 
-bool LTimer_calculating_frame_rate::isStarted()
+bool LTimer_capping_frame_rate::isStarted()
 {
 	//Timer is running and paused or unpaused
     return mStarted;
 }
 
-bool LTimer_calculating_frame_rate::isPaused()
+bool LTimer_capping_frame_rate::isPaused()
 {
 	//Timer is running and paused
     return mPaused && mStarted;
 }
 
-bool init_calculating_frame_rate()
+bool init_capping_frame_rate()
 {
 	//Initialization flag
 	bool success = true;
@@ -370,7 +372,7 @@ bool init_calculating_frame_rate()
 	//Initialize SDL
 	if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
 	{
-		printf( "SDL could not initialize! SDL Error: %s\n", SDL_GetError() );
+		printf( "SDL could not initialize! %s\n", SDL_GetError() );
 		success = false;
 	}
 	else
@@ -382,17 +384,17 @@ bool init_calculating_frame_rate()
 		}
 
 		//Create window
-		gWindow_calculating_frame_rate = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-		if( gWindow_calculating_frame_rate == NULL )
+		gWindow_capping_frame_rate = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		if( gWindow_capping_frame_rate == NULL )
 		{
 			printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
 			success = false;
 		}
 		else
 		{
-			//Create vsynced renderer for window
-			gRenderer_calculating_frame_rate = SDL_CreateRenderer( gWindow_calculating_frame_rate, -1, SDL_RENDERER_ACCELERATED );
-			if( gRenderer_calculating_frame_rate == NULL )
+			//Create renderer for window
+			gRenderer_capping_frame_rate = SDL_CreateRenderer( gWindow_capping_frame_rate, -1, SDL_RENDERER_ACCELERATED );
+			if( gRenderer_capping_frame_rate == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
 				success = false;
@@ -400,7 +402,7 @@ bool init_calculating_frame_rate()
 			else
 			{
 				//Initialize renderer color
-				SDL_SetRenderDrawColor( gRenderer_calculating_frame_rate, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_SetRenderDrawColor( gRenderer_capping_frame_rate, 0xFF, 0xFF, 0xFF, 0xFF );
 
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
@@ -423,14 +425,14 @@ bool init_calculating_frame_rate()
 	return success;
 }
 
-bool loadMedia_calculating_frame_rate()
+bool loadMedia_capping_frame_rate()
 {
 	//Loading success flag
 	bool success = true;
 
 	//Open the font
-	gFont_calculating_frame_rate = TTF_OpenFont( "lazy.ttf", 28 );
-	if( gFont_calculating_frame_rate == NULL )
+	gFont_capping_frame_rate = TTF_OpenFont( "lazy.ttf", 28 );
+	if( gFont_capping_frame_rate == NULL )
 	{
 		printf( "Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError() );
 		success = false;
@@ -439,20 +441,20 @@ bool loadMedia_calculating_frame_rate()
 	return success;
 }
 
-void close_calculating_frame_rate()
+void close_capping_frame_rate()
 {
 	//Free loaded images
-	gFPSTextTexture_calculating_frame_rate.free();
+	gFPSTextTexture_capping_frame_rate.free();
 
 	//Free global font
-	TTF_CloseFont( gFont_calculating_frame_rate);
-	gFont_calculating_frame_rate = NULL;
+	TTF_CloseFont( gFont_capping_frame_rate);
+	gFont_capping_frame_rate = NULL;
 
 	//Destroy window	
-	SDL_DestroyRenderer( gRenderer_calculating_frame_rate);
-	SDL_DestroyWindow( gWindow_calculating_frame_rate);
-	gWindow_calculating_frame_rate = NULL;
-	gRenderer_calculating_frame_rate = NULL;
+	SDL_DestroyRenderer( gRenderer_capping_frame_rate);
+	SDL_DestroyWindow( gWindow_capping_frame_rate);
+	gWindow_capping_frame_rate = NULL;
+	gRenderer_capping_frame_rate = NULL;
 
 	//Quit SDL subsystems
 	TTF_Quit();
@@ -460,17 +462,17 @@ void close_calculating_frame_rate()
 	SDL_Quit();
 }
 
-int main_calculating_frame_rate( int argc, char* args[] )
+int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
-	if( !init_calculating_frame_rate() )
+	if( !init_capping_frame_rate() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
 	else
 	{
 		//Load media
-		if( !loadMedia_calculating_frame_rate() )
+		if( !loadMedia_capping_frame_rate() )
 		{
 			printf( "Failed to load media!\n" );
 		}
@@ -486,7 +488,10 @@ int main_calculating_frame_rate( int argc, char* args[] )
 			SDL_Color textColor = { 0, 0, 0, 255 };
 
 			//The frames per second timer
-			LTimer_calculating_frame_rate fpsTimer;
+			LTimer_capping_frame_rate fpsTimer;
+
+			//The frames per second cap timer
+			LTimer_capping_frame_rate capTimer;
 
 			//In memory text stream
 			std::stringstream timeText;
@@ -498,6 +503,9 @@ int main_calculating_frame_rate( int argc, char* args[] )
 			//While application is running
 			while( !quit )
 			{
+				//Start cap timer
+				capTimer.start();
+
 				//Handle events on queue
 				while( SDL_PollEvent( &e ) != 0 )
 				{
@@ -514,33 +522,41 @@ int main_calculating_frame_rate( int argc, char* args[] )
 				{
 					avgFPS = 0;
 				}
-				
+
 				//Set text to be rendered
 				timeText.str( "" );
-				timeText << "Average Frames Per Second " << avgFPS; 
+				timeText << "Average Frames Per Second (With Cap) " << avgFPS; 
 
 				//Render text
-				if( !gFPSTextTexture_calculating_frame_rate.loadFromRenderedText( timeText.str().c_str(), textColor ) )
+				if( !gFPSTextTexture_capping_frame_rate.loadFromRenderedText( timeText.str().c_str(), textColor ) )
 				{
 					printf( "Unable to render FPS texture!\n" );
 				}
 
 				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer_calculating_frame_rate, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer_calculating_frame_rate);
+				SDL_SetRenderDrawColor( gRenderer_capping_frame_rate, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_RenderClear( gRenderer_capping_frame_rate);
 
 				//Render textures
-				gFPSTextTexture_calculating_frame_rate.render( ( SCREEN_WIDTH - gFPSTextTexture_calculating_frame_rate.getWidth() ) / 2, ( SCREEN_HEIGHT - gFPSTextTexture_calculating_frame_rate.getHeight() ) / 2 );
+				gFPSTextTexture_capping_frame_rate.render( ( SCREEN_WIDTH - gFPSTextTexture_capping_frame_rate.getWidth() ) / 2, ( SCREEN_HEIGHT - gFPSTextTexture_capping_frame_rate.getHeight() ) / 2 );
 
 				//Update screen
-				SDL_RenderPresent( gRenderer_calculating_frame_rate);
+				SDL_RenderPresent( gRenderer_capping_frame_rate);
 				++countedFrames;
+
+				//If frame finished early
+				int frameTicks = capTimer.getTicks();
+				if( frameTicks < SCREEN_TICK_PER_FRAME )
+				{
+					//Wait remaining time
+					SDL_Delay( SCREEN_TICK_PER_FRAME - frameTicks );
+				}
 			}
 		}
 	}
 
 	//Free resources and close SDL
-	close_calculating_frame_rate();
+	close_capping_frame_rate();
 
 	return 0;
 }
