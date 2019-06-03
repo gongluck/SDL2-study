@@ -6,21 +6,27 @@ and may not be redistributed without written permission.*/
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
-#include <vector>
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
+//A circle stucture
+struct Circle_circular_collision_detection
+{
+	int x, y;
+	int r;
+};
+
 //Texture wrapper class
-class LTexture_per_pixel_collision_detection
+class LTexture_circular_collision_detection
 {
 	public:
 		//Initializes variables
-		LTexture_per_pixel_collision_detection();
+		LTexture_circular_collision_detection();
 
 		//Deallocates memory
-		~LTexture_per_pixel_collision_detection();
+		~LTexture_circular_collision_detection();
 
 		//Loads image at specified path
 		bool loadFromFile( std::string path );
@@ -59,7 +65,7 @@ class LTexture_per_pixel_collision_detection
 };
 
 //The dot that will move around on the screen
-class Dot_per_pixel_collision_detection
+class Dot_circular_collision_detection
 {
     public:
 		//The dimensions of the dot
@@ -70,19 +76,19 @@ class Dot_per_pixel_collision_detection
 		static const int DOT_VEL = 1;
 
 		//Initializes the variables
-		Dot_per_pixel_collision_detection( int x, int y );
+		Dot_circular_collision_detection( int x, int y );
 
 		//Takes key presses and adjusts the dot's velocity
 		void handleEvent( SDL_Event& e );
 
 		//Moves the dot and checks collision
-		void move( std::vector<SDL_Rect>& otherColliders );
+		void move( SDL_Rect& square, Circle_circular_collision_detection& circle );
 
 		//Shows the dot on the screen
 		void render();
 
-		//Gets the collision boxes
-		std::vector<SDL_Rect>& getColliders();
+		//Gets collision circle
+		Circle_circular_collision_detection& getCollider();
 
     private:
 		//The X and Y offsets of the dot
@@ -91,35 +97,41 @@ class Dot_per_pixel_collision_detection
 		//The velocity of the dot
 		int mVelX, mVelY;
 		
-		//Dot's collision boxes
-	    std::vector<SDL_Rect> mColliders;
+		//Dot's collision circle
+		Circle_circular_collision_detection mCollider;
 
-		//Moves the collision boxes relative to the dot's offset
+		//Moves the collision circle relative to the dot's offset
 		void shiftColliders();
 };
 
 //Starts up SDL and creates window
-bool init_per_pixel_collision_detection();
+bool init_circular_collision_detection();
 
 //Loads media
-bool loadMedia_per_pixel_collision_detection();
+bool loadMedia_circular_collision_detection();
 
 //Frees media and shuts down SDL
-void close_per_pixel_collision_detection();
+void close_circular_collision_detection();
 
-//Box set collision detector
-bool checkCollision_per_pixel_collision_detection( std::vector<SDL_Rect>& a, std::vector<SDL_Rect>& b );
+//Circle/Circle collision detector
+bool checkCollision_circular_collision_detection( Circle_circular_collision_detection& a, Circle_circular_collision_detection& b );
+
+//Circle/Box collision detector
+bool checkCollision_circular_collision_detection( Circle_circular_collision_detection& a, SDL_Rect& b );
+
+//Calculates distance squared between two points
+double distanceSquared_circular_collision_detection( int x1, int y1, int x2, int y2 );
 
 //The window we'll be rendering to
-SDL_Window* gWindow_per_pixel_collision_detection = NULL;
+SDL_Window* gWindow_circular_collision_detection = NULL;
 
 //The window renderer
-SDL_Renderer* gRenderer_per_pixel_collision_detection = NULL;
+SDL_Renderer* gRenderer_circular_collision_detection = NULL;
 
 //Scene textures
-LTexture_per_pixel_collision_detection gDotTexture_per_pixel_collision_detection;
+LTexture_circular_collision_detection gDotTexture_circular_collision_detection;
 
-LTexture_per_pixel_collision_detection::LTexture_per_pixel_collision_detection()
+LTexture_circular_collision_detection::LTexture_circular_collision_detection()
 {
 	//Initialize
 	mTexture = NULL;
@@ -127,13 +139,13 @@ LTexture_per_pixel_collision_detection::LTexture_per_pixel_collision_detection()
 	mHeight = 0;
 }
 
-LTexture_per_pixel_collision_detection::~LTexture_per_pixel_collision_detection()
+LTexture_circular_collision_detection::~LTexture_circular_collision_detection()
 {
 	//Deallocate
 	free();
 }
 
-bool LTexture_per_pixel_collision_detection::loadFromFile( std::string path )
+bool LTexture_circular_collision_detection::loadFromFile( std::string path )
 {
 	//Get rid of preexisting texture
 	free();
@@ -153,7 +165,7 @@ bool LTexture_per_pixel_collision_detection::loadFromFile( std::string path )
 		SDL_SetColorKey( loadedSurface, SDL_TRUE, SDL_MapRGB( loadedSurface->format, 0, 0xFF, 0xFF ) );
 
 		//Create texture from surface pixels
-        newTexture = SDL_CreateTextureFromSurface( gRenderer_per_pixel_collision_detection, loadedSurface );
+        newTexture = SDL_CreateTextureFromSurface( gRenderer_circular_collision_detection, loadedSurface );
 		if( newTexture == NULL )
 		{
 			printf( "Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError() );
@@ -211,7 +223,7 @@ bool LTexture::loadFromRenderedText( std::string textureText, SDL_Color textColo
 }
 #endif
 
-void LTexture_per_pixel_collision_detection::free()
+void LTexture_circular_collision_detection::free()
 {
 	//Free texture if it exists
 	if( mTexture != NULL )
@@ -223,25 +235,25 @@ void LTexture_per_pixel_collision_detection::free()
 	}
 }
 
-void LTexture_per_pixel_collision_detection::setColor( Uint8 red, Uint8 green, Uint8 blue )
+void LTexture_circular_collision_detection::setColor( Uint8 red, Uint8 green, Uint8 blue )
 {
 	//Modulate texture rgb
 	SDL_SetTextureColorMod( mTexture, red, green, blue );
 }
 
-void LTexture_per_pixel_collision_detection::setBlendMode( SDL_BlendMode blending )
+void LTexture_circular_collision_detection::setBlendMode( SDL_BlendMode blending )
 {
 	//Set blending function
 	SDL_SetTextureBlendMode( mTexture, blending );
 }
 		
-void LTexture_per_pixel_collision_detection::setAlpha( Uint8 alpha )
+void LTexture_circular_collision_detection::setAlpha( Uint8 alpha )
 {
 	//Modulate texture alpha
 	SDL_SetTextureAlphaMod( mTexture, alpha );
 }
 
-void LTexture_per_pixel_collision_detection::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
+void LTexture_circular_collision_detection::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
@@ -254,71 +266,37 @@ void LTexture_per_pixel_collision_detection::render( int x, int y, SDL_Rect* cli
 	}
 
 	//Render to screen
-	SDL_RenderCopyEx( gRenderer_per_pixel_collision_detection, mTexture, clip, &renderQuad, angle, center, flip );
+	SDL_RenderCopyEx( gRenderer_circular_collision_detection, mTexture, clip, &renderQuad, angle, center, flip );
 }
 
-int LTexture_per_pixel_collision_detection::getWidth()
+int LTexture_circular_collision_detection::getWidth()
 {
 	return mWidth;
 }
 
-int LTexture_per_pixel_collision_detection::getHeight()
+int LTexture_circular_collision_detection::getHeight()
 {
 	return mHeight;
 }
 
-Dot_per_pixel_collision_detection::Dot_per_pixel_collision_detection( int x, int y )
+Dot_circular_collision_detection::Dot_circular_collision_detection( int x, int y )
 {
     //Initialize the offsets
     mPosX = x;
     mPosY = y;
 
-    //Create the necessary SDL_Rects
-    mColliders.resize( 11 );
+	//Set collision circle size
+	mCollider.r = DOT_WIDTH / 2;
 
     //Initialize the velocity
     mVelX = 0;
     mVelY = 0;
 
-    //Initialize the collision boxes' width and height
-    mColliders[ 0 ].w = 6;
-    mColliders[ 0 ].h = 1;
-
-    mColliders[ 1 ].w = 10;
-    mColliders[ 1 ].h = 1;
-
-    mColliders[ 2 ].w = 14;
-    mColliders[ 2 ].h = 1;
-
-    mColliders[ 3 ].w = 16;
-    mColliders[ 3 ].h = 2;
-
-    mColliders[ 4 ].w = 18;
-    mColliders[ 4 ].h = 2;
-
-    mColliders[ 5 ].w = 20;
-    mColliders[ 5 ].h = 6;
-
-    mColliders[ 6 ].w = 18;
-    mColliders[ 6 ].h = 2;
-
-    mColliders[ 7 ].w = 16;
-    mColliders[ 7 ].h = 2;
-
-    mColliders[ 8 ].w = 14;
-    mColliders[ 8 ].h = 1;
-
-    mColliders[ 9 ].w = 10;
-    mColliders[ 9 ].h = 1;
-
-    mColliders[ 10 ].w = 6;
-    mColliders[ 10 ].h = 1;
-
-	//Initialize colliders relative to position
+	//Move collider relative to the circle
 	shiftColliders();
 }
 
-void Dot_per_pixel_collision_detection::handleEvent( SDL_Event& e )
+void Dot_circular_collision_detection::handleEvent( SDL_Event& e )
 {
     //If a key was pressed
 	if( e.type == SDL_KEYDOWN && e.key.repeat == 0 )
@@ -346,14 +324,14 @@ void Dot_per_pixel_collision_detection::handleEvent( SDL_Event& e )
     }
 }
 
-void Dot_per_pixel_collision_detection::move( std::vector<SDL_Rect>& otherColliders )
+void Dot_circular_collision_detection::move( SDL_Rect& square, Circle_circular_collision_detection& circle )
 {
     //Move the dot left or right
     mPosX += mVelX;
-    shiftColliders();
+	shiftColliders();
 
     //If the dot collided or went too far to the left or right
-    if( ( mPosX < 0 ) || ( mPosX + DOT_WIDTH > SCREEN_WIDTH ) || checkCollision_per_pixel_collision_detection( mColliders, otherColliders ) )
+	if( ( mPosX - mCollider.r < 0 ) || ( mPosX + mCollider.r > SCREEN_WIDTH ) || checkCollision_circular_collision_detection( mCollider, square ) || checkCollision_circular_collision_detection( mCollider, circle ) )
     {
         //Move back
         mPosX -= mVelX;
@@ -365,7 +343,7 @@ void Dot_per_pixel_collision_detection::move( std::vector<SDL_Rect>& otherCollid
 	shiftColliders();
 
     //If the dot collided or went too far up or down
-    if( ( mPosY < 0 ) || ( mPosY + DOT_HEIGHT > SCREEN_HEIGHT ) || checkCollision_per_pixel_collision_detection( mColliders, otherColliders ) )
+    if( ( mPosY - mCollider.r < 0 ) || ( mPosY + mCollider.r > SCREEN_HEIGHT ) || checkCollision_circular_collision_detection( mCollider, square ) || checkCollision_circular_collision_detection( mCollider, circle ) )
     {
         //Move back
         mPosY -= mVelY;
@@ -373,37 +351,25 @@ void Dot_per_pixel_collision_detection::move( std::vector<SDL_Rect>& otherCollid
     }
 }
 
-void Dot_per_pixel_collision_detection::render()
+void Dot_circular_collision_detection::render()
 {
     //Show the dot
-	gDotTexture_per_pixel_collision_detection.render( mPosX, mPosY );
+	gDotTexture_circular_collision_detection.render( mPosX - mCollider.r, mPosY - mCollider.r );
 }
 
-void Dot_per_pixel_collision_detection::shiftColliders()
+Circle_circular_collision_detection& Dot_circular_collision_detection::getCollider()
 {
-    //The row offset
-    int r = 0;
-
-    //Go through the dot's collision boxes
-    for( int set = 0; set < mColliders.size(); ++set )
-    {
-        //Center the collision box
-        mColliders[ set ].x = mPosX + ( DOT_WIDTH - mColliders[ set ].w ) / 2;
-
-        //Set the collision box at its row offset
-        mColliders[ set ].y = mPosY + r;
-
-        //Move the row offset down the height of the collision box
-        r += mColliders[ set ].h;
-    }
+	return mCollider;
 }
 
-std::vector<SDL_Rect>& Dot_per_pixel_collision_detection::getColliders()
+void Dot_circular_collision_detection::shiftColliders()
 {
-	return mColliders;
+	//Align collider to center of dot
+	mCollider.x = mPosX;
+	mCollider.y = mPosY;
 }
 
-bool init_per_pixel_collision_detection()
+bool init_circular_collision_detection()
 {
 	//Initialization flag
 	bool success = true;
@@ -423,8 +389,8 @@ bool init_per_pixel_collision_detection()
 		}
 
 		//Create window
-		gWindow_per_pixel_collision_detection = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-		if( gWindow_per_pixel_collision_detection == NULL )
+		gWindow_circular_collision_detection = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		if( gWindow_circular_collision_detection == NULL )
 		{
 			printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
 			success = false;
@@ -432,8 +398,8 @@ bool init_per_pixel_collision_detection()
 		else
 		{
 			//Create vsynced renderer for window
-			gRenderer_per_pixel_collision_detection = SDL_CreateRenderer( gWindow_per_pixel_collision_detection, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
-			if( gRenderer_per_pixel_collision_detection == NULL )
+			gRenderer_circular_collision_detection = SDL_CreateRenderer( gWindow_circular_collision_detection, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+			if( gRenderer_circular_collision_detection == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
 				success = false;
@@ -441,7 +407,7 @@ bool init_per_pixel_collision_detection()
 			else
 			{
 				//Initialize renderer color
-				SDL_SetRenderDrawColor( gRenderer_per_pixel_collision_detection, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_SetRenderDrawColor( gRenderer_circular_collision_detection, 0xFF, 0xFF, 0xFF, 0xFF );
 
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
@@ -457,13 +423,13 @@ bool init_per_pixel_collision_detection()
 	return success;
 }
 
-bool loadMedia_per_pixel_collision_detection()
+bool loadMedia_circular_collision_detection()
 {
 	//Loading success flag
 	bool success = true;
 
 	//Load dot texture
-	if( !gDotTexture_per_pixel_collision_detection.loadFromFile( "dot.bmp" ) )
+	if( !gDotTexture_circular_collision_detection.loadFromFile( "dot.bmp" ) )
 	{
 		printf( "Failed to load dot texture!\n" );
 		success = false;
@@ -472,72 +438,101 @@ bool loadMedia_per_pixel_collision_detection()
 	return success;
 }
 
-void close_per_pixel_collision_detection()
+void close_circular_collision_detection()
 {
 	//Free loaded images
-	gDotTexture_per_pixel_collision_detection.free();
+	gDotTexture_circular_collision_detection.free();
 
 	//Destroy window	
-	SDL_DestroyRenderer( gRenderer_per_pixel_collision_detection);
-	SDL_DestroyWindow( gWindow_per_pixel_collision_detection);
-	gWindow_per_pixel_collision_detection = NULL;
-	gRenderer_per_pixel_collision_detection = NULL;
+	SDL_DestroyRenderer( gRenderer_circular_collision_detection);
+	SDL_DestroyWindow( gWindow_circular_collision_detection);
+	gWindow_circular_collision_detection = NULL;
+	gRenderer_circular_collision_detection = NULL;
 
 	//Quit SDL subsystems
 	IMG_Quit();
 	SDL_Quit();
 }
 
-bool checkCollision_per_pixel_collision_detection( std::vector<SDL_Rect>& a, std::vector<SDL_Rect>& b )
+bool checkCollision_circular_collision_detection( Circle_circular_collision_detection& a, Circle_circular_collision_detection& b )
 {
-    //The sides of the rectangles
-    int leftA, leftB;
-    int rightA, rightB;
-    int topA, topB;
-    int bottomA, bottomB;
+	//Calculate total radius squared
+	int totalRadiusSquared = a.r + b.r;
+	totalRadiusSquared = totalRadiusSquared * totalRadiusSquared;
 
-    //Go through the A boxes
-    for( int Abox = 0; Abox < a.size(); Abox++ )
+    //If the distance between the centers of the circles is less than the sum of their radii
+    if( distanceSquared_circular_collision_detection( a.x, a.y, b.x, b.y ) < ( totalRadiusSquared ) )
     {
-        //Calculate the sides of rect A
-        leftA = a[ Abox ].x;
-        rightA = a[ Abox ].x + a[ Abox ].w;
-        topA = a[ Abox ].y;
-        bottomA = a[ Abox ].y + a[ Abox ].h;
-
-        //Go through the B boxes
-        for( int Bbox = 0; Bbox < b.size(); Bbox++ )
-        {
-            //Calculate the sides of rect B
-            leftB = b[ Bbox ].x;
-            rightB = b[ Bbox ].x + b[ Bbox ].w;
-            topB = b[ Bbox ].y;
-            bottomB = b[ Bbox ].y + b[ Bbox ].h;
-
-            //If no sides from A are outside of B
-            if( ( ( bottomA <= topB ) || ( topA >= bottomB ) || ( rightA <= leftB ) || ( leftA >= rightB ) ) == false )
-            {
-                //A collision is detected
-                return true;
-            }
-        }
+        //The circles have collided
+        return true;
     }
 
-    //If neither set of collision boxes touched
+    //If not
     return false;
 }
 
-int main_per_pixel_collision_detection( int argc, char* args[] )
+bool checkCollision_circular_collision_detection( Circle_circular_collision_detection& a, SDL_Rect& b )
+{
+    //Closest point on collision box
+    int cX, cY;
+
+    //Find closest x offset
+    if( a.x < b.x )
+    {
+        cX = b.x;
+    }
+    else if( a.x > b.x + b.w )
+    {
+        cX = b.x + b.w;
+    }
+    else
+    {
+        cX = a.x;
+    }
+
+    //Find closest y offset
+    if( a.y < b.y )
+    {
+        cY = b.y;
+    }
+    else if( a.y > b.y + b.h )
+    {
+        cY = b.y + b.h;
+    }
+    else
+    {
+        cY = a.y;
+    }
+
+    //If the closest point is inside the circle
+    if( distanceSquared_circular_collision_detection( a.x, a.y, cX, cY ) < a.r * a.r )
+    {
+        //This box and the circle have collided
+        return true;
+    }
+
+    //If the shapes have not collided
+    return false;
+}
+
+double distanceSquared_circular_collision_detection( int x1, int y1, int x2, int y2 )
+{
+	int deltaX = x2 - x1;
+	int deltaY = y2 - y1;
+	return deltaX*deltaX + deltaY*deltaY;
+}
+
+int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
-	if( !init_per_pixel_collision_detection() )
+	if( !init_circular_collision_detection() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
 	else
 	{
 		//Load media
-		if( !loadMedia_per_pixel_collision_detection() )
+		if( !loadMedia_circular_collision_detection() )
 		{
 			printf( "Failed to load media!\n" );
 		}
@@ -550,10 +545,15 @@ int main_per_pixel_collision_detection( int argc, char* args[] )
 			SDL_Event e;
 
 			//The dot that will be moving around on the screen
-			Dot_per_pixel_collision_detection dot( 0, 0 );
-			
-			//The dot that will be collided against
-			Dot_per_pixel_collision_detection otherDot( SCREEN_WIDTH / 4, SCREEN_HEIGHT / 4 );
+			Dot_circular_collision_detection dot( Dot_circular_collision_detection::DOT_WIDTH / 2, Dot_circular_collision_detection::DOT_HEIGHT / 2 );
+			Dot_circular_collision_detection otherDot( SCREEN_WIDTH / 4, SCREEN_HEIGHT / 4 );
+
+			//Set the wall
+			SDL_Rect wall;
+			wall.x = 300;
+			wall.y = 40;
+			wall.w = 40;
+			wall.h = 400;
 			
 			//While application is running
 			while( !quit )
@@ -572,24 +572,28 @@ int main_per_pixel_collision_detection( int argc, char* args[] )
 				}
 
 				//Move the dot and check collision
-				dot.move( otherDot.getColliders() );
+				dot.move( wall, otherDot.getCollider() );
 
 				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer_per_pixel_collision_detection, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer_per_pixel_collision_detection);
+				SDL_SetRenderDrawColor( gRenderer_circular_collision_detection, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_RenderClear( gRenderer_circular_collision_detection);
+
+				//Render wall
+				SDL_SetRenderDrawColor( gRenderer_circular_collision_detection, 0x00, 0x00, 0x00, 0xFF );
+				SDL_RenderDrawRect( gRenderer_circular_collision_detection, &wall );
 				
 				//Render dots
 				dot.render();
 				otherDot.render();
 
 				//Update screen
-				SDL_RenderPresent( gRenderer_per_pixel_collision_detection);
+				SDL_RenderPresent( gRenderer_circular_collision_detection);
 			}
 		}
 	}
 
 	//Free resources and close SDL
-	close_per_pixel_collision_detection();
+	close_circular_collision_detection();
 
 	return 0;
 }
