@@ -45,6 +45,7 @@
     <ClCompile Include="src\24_calculating_frame_rate.cpp" />
     <ClCompile Include="src\25_capping_frame_rate.cpp" />
     <ClCompile Include="src\26_motion.cpp" />
+    <ClCompile Include="src\27_collision_detection.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

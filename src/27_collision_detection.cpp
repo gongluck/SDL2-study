@@ -12,19 +12,19 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 //Texture wrapper class
-class LTexture_motion
+class LTexture_collision_detection
 {
 	public:
 		//Initializes variables
-		LTexture_motion();
+		LTexture_collision_detection();
 
 		//Deallocates memory
-		~LTexture_motion();
+		~LTexture_collision_detection();
 
 		//Loads image at specified path
 		bool loadFromFile( std::string path );
 		
-		#ifdef SDL_TTF_H_
+		#ifdef _SDL_TTF_H
 		//Creates image from font string
 		bool loadFromRenderedText( std::string textureText, SDL_Color textColor );
 		#endif
@@ -57,40 +57,8 @@ class LTexture_motion
 		int mHeight;
 };
 
-//The application time based timer
-class LTimer_motion
-{
-    public:
-		//Initializes variables
-		LTimer_motion();
-
-		//The various clock actions
-		void start();
-		void stop();
-		void pause();
-		void unpause();
-
-		//Gets the timer's time
-		Uint32 getTicks();
-
-		//Checks the status of the timer
-		bool isStarted();
-		bool isPaused();
-
-    private:
-		//The clock time when the timer started
-		Uint32 mStartTicks;
-
-		//The ticks stored when the timer was paused
-		Uint32 mPausedTicks;
-
-		//The timer status
-		bool mPaused;
-		bool mStarted;
-};
-
 //The dot that will move around on the screen
-class Dot_motion
+class Dot_collision_detection
 {
     public:
 		//The dimensions of the dot
@@ -101,13 +69,13 @@ class Dot_motion
 		static const int DOT_VEL = 10;
 
 		//Initializes the variables
-		Dot_motion();
+		Dot_collision_detection();
 
 		//Takes key presses and adjusts the dot's velocity
 		void handleEvent( SDL_Event& e );
 
-		//Moves the dot
-		void move();
+		//Moves the dot and checks collision
+		void move( SDL_Rect& wall );
 
 		//Shows the dot on the screen
 		void render();
@@ -118,27 +86,33 @@ class Dot_motion
 
 		//The velocity of the dot
 		int mVelX, mVelY;
+		
+		//Dot's collision box
+		SDL_Rect mCollider;
 };
 
 //Starts up SDL and creates window
-bool init_motion();
+bool init_collision_detection();
 
 //Loads media
-bool loadMedia_motion();
+bool loadMedia_collision_detection();
 
 //Frees media and shuts down SDL
-void close_motion();
+void close_collision_detection();
+
+//Box collision detector
+bool checkCollision_collision_detection( SDL_Rect a, SDL_Rect b );
 
 //The window we'll be rendering to
-SDL_Window* gWindow_motion = NULL;
+SDL_Window* gWindow_collision_detection = NULL;
 
 //The window renderer
-SDL_Renderer* gRenderer_motion = NULL;
+SDL_Renderer* gRenderer_collision_detection = NULL;
 
 //Scene textures
-LTexture_motion gDotTexture_motion;
+LTexture_collision_detection gDotTexture_collision_detection;
 
-LTexture_motion::LTexture_motion()
+LTexture_collision_detection::LTexture_collision_detection()
 {
 	//Initialize
 	mTexture = NULL;
@@ -146,13 +120,13 @@ LTexture_motion::LTexture_motion()
 	mHeight = 0;
 }
 
-LTexture_motion::~LTexture_motion()
+LTexture_collision_detection::~LTexture_collision_detection()
 {
 	//Deallocate
 	free();
 }
 
-bool LTexture_motion::loadFromFile( std::string path )
+bool LTexture_collision_detection::loadFromFile( std::string path )
 {
 	//Get rid of preexisting texture
 	free();
@@ -172,7 +146,7 @@ bool LTexture_motion::loadFromFile( std::string path )
 		SDL_SetColorKey( loadedSurface, SDL_TRUE, SDL_MapRGB( loadedSurface->format, 0, 0xFF, 0xFF ) );
 
 		//Create texture from surface pixels
-        newTexture = SDL_CreateTextureFromSurface( gRenderer_motion, loadedSurface );
+        newTexture = SDL_CreateTextureFromSurface( gRenderer_collision_detection, loadedSurface );
 		if( newTexture == NULL )
 		{
 			printf( "Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError() );
@@ -193,7 +167,7 @@ bool LTexture_motion::loadFromFile( std::string path )
 	return mTexture != NULL;
 }
 
-#ifdef SDL_TTF_H_
+#ifdef _SDL_TTF_H
 bool LTexture::loadFromRenderedText( std::string textureText, SDL_Color textColor )
 {
 	//Get rid of preexisting texture
@@ -230,7 +204,7 @@ bool LTexture::loadFromRenderedText( std::string textureText, SDL_Color textColo
 }
 #endif
 
-void LTexture_motion::free()
+void LTexture_collision_detection::free()
 {
 	//Free texture if it exists
 	if( mTexture != NULL )
@@ -242,25 +216,25 @@ void LTexture_motion::free()
 	}
 }
 
-void LTexture_motion::setColor( Uint8 red, Uint8 green, Uint8 blue )
+void LTexture_collision_detection::setColor( Uint8 red, Uint8 green, Uint8 blue )
 {
 	//Modulate texture rgb
 	SDL_SetTextureColorMod( mTexture, red, green, blue );
 }
 
-void LTexture_motion::setBlendMode( SDL_BlendMode blending )
+void LTexture_collision_detection::setBlendMode( SDL_BlendMode blending )
 {
 	//Set blending function
 	SDL_SetTextureBlendMode( mTexture, blending );
 }
 		
-void LTexture_motion::setAlpha( Uint8 alpha )
+void LTexture_collision_detection::setAlpha( Uint8 alpha )
 {
 	//Modulate texture alpha
 	SDL_SetTextureAlphaMod( mTexture, alpha );
 }
 
-void LTexture_motion::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
+void LTexture_collision_detection::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
@@ -273,32 +247,35 @@ void LTexture_motion::render( int x, int y, SDL_Rect* clip, double angle, SDL_Po
 	}
 
 	//Render to screen
-	SDL_RenderCopyEx( gRenderer_motion, mTexture, clip, &renderQuad, angle, center, flip );
+	SDL_RenderCopyEx( gRenderer_collision_detection, mTexture, clip, &renderQuad, angle, center, flip );
 }
 
-int LTexture_motion::getWidth()
+int LTexture_collision_detection::getWidth()
 {
 	return mWidth;
 }
 
-int LTexture_motion::getHeight()
+int LTexture_collision_detection::getHeight()
 {
 	return mHeight;
 }
 
-
-Dot_motion::Dot_motion()
+Dot_collision_detection::Dot_collision_detection()
 {
     //Initialize the offsets
     mPosX = 0;
     mPosY = 0;
+
+	//Set collision box dimension
+	mCollider.w = DOT_WIDTH;
+	mCollider.h = DOT_HEIGHT;
 
     //Initialize the velocity
     mVelX = 0;
     mVelY = 0;
 }
 
-void Dot_motion::handleEvent( SDL_Event& e )
+void Dot_collision_detection::handleEvent( SDL_Event& e )
 {
     //If a key was pressed
 	if( e.type == SDL_KEYDOWN && e.key.repeat == 0 )
@@ -326,36 +303,40 @@ void Dot_motion::handleEvent( SDL_Event& e )
     }
 }
 
-void Dot_motion::move()
+void Dot_collision_detection::move( SDL_Rect& wall )
 {
     //Move the dot left or right
     mPosX += mVelX;
+	mCollider.x = mPosX;
 
-    //If the dot went too far to the left or right
-    if( ( mPosX < 0 ) || ( mPosX + DOT_WIDTH > SCREEN_WIDTH ) )
+    //If the dot collided or went too far to the left or right
+    if( ( mPosX < 0 ) || ( mPosX + DOT_WIDTH > SCREEN_WIDTH ) || checkCollision_collision_detection( mCollider, wall ) )
     {
         //Move back
         mPosX -= mVelX;
+		mCollider.x = mPosX;
     }
 
     //Move the dot up or down
     mPosY += mVelY;
+	mCollider.y = mPosY;
 
-    //If the dot went too far up or down
-    if( ( mPosY < 0 ) || ( mPosY + DOT_HEIGHT > SCREEN_HEIGHT ) )
+    //If the dot collided or went too far up or down
+    if( ( mPosY < 0 ) || ( mPosY + DOT_HEIGHT > SCREEN_HEIGHT ) || checkCollision_collision_detection( mCollider, wall ) )
     {
         //Move back
         mPosY -= mVelY;
+		mCollider.y = mPosY;
     }
 }
 
-void Dot_motion::render()
+void Dot_collision_detection::render()
 {
     //Show the dot
-	gDotTexture_motion.render( mPosX, mPosY );
+	gDotTexture_collision_detection.render( mPosX, mPosY );
 }
 
-bool init_motion()
+bool init_collision_detection()
 {
 	//Initialization flag
 	bool success = true;
@@ -375,8 +356,8 @@ bool init_motion()
 		}
 
 		//Create window
-		gWindow_motion = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-		if( gWindow_motion == NULL )
+		gWindow_collision_detection = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		if( gWindow_collision_detection == NULL )
 		{
 			printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
 			success = false;
@@ -384,8 +365,8 @@ bool init_motion()
 		else
 		{
 			//Create vsynced renderer for window
-			gRenderer_motion = SDL_CreateRenderer( gWindow_motion, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
-			if( gRenderer_motion == NULL )
+			gRenderer_collision_detection = SDL_CreateRenderer( gWindow_collision_detection, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+			if( gRenderer_collision_detection == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
 				success = false;
@@ -393,7 +374,7 @@ bool init_motion()
 			else
 			{
 				//Initialize renderer color
-				SDL_SetRenderDrawColor( gRenderer_motion, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_SetRenderDrawColor( gRenderer_collision_detection, 0xFF, 0xFF, 0xFF, 0xFF );
 
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
@@ -409,13 +390,13 @@ bool init_motion()
 	return success;
 }
 
-bool loadMedia_motion()
+bool loadMedia_collision_detection()
 {
 	//Loading success flag
 	bool success = true;
 
-	//Load dot texture
-	if( !gDotTexture_motion.loadFromFile( "dot.bmp" ) )
+	//Load press texture
+	if( !gDotTexture_collision_detection.loadFromFile( "dot.bmp" ) )
 	{
 		printf( "Failed to load dot texture!\n" );
 		success = false;
@@ -424,33 +405,78 @@ bool loadMedia_motion()
 	return success;
 }
 
-void close_motion()
+void close_collision_detection()
 {
 	//Free loaded images
-	gDotTexture_motion.free();
+	gDotTexture_collision_detection.free();
 
 	//Destroy window	
-	SDL_DestroyRenderer( gRenderer_motion);
-	SDL_DestroyWindow( gWindow_motion);
-	gWindow_motion = NULL;
-	gRenderer_motion = NULL;
+	SDL_DestroyRenderer( gRenderer_collision_detection);
+	SDL_DestroyWindow( gWindow_collision_detection);
+	gWindow_collision_detection = NULL;
+	gRenderer_collision_detection = NULL;
 
 	//Quit SDL subsystems
 	IMG_Quit();
 	SDL_Quit();
 }
 
-int main_motion( int argc, char* args[] )
+bool checkCollision_collision_detection( SDL_Rect a, SDL_Rect b )
+{
+    //The sides of the rectangles
+    int leftA, leftB;
+    int rightA, rightB;
+    int topA, topB;
+    int bottomA, bottomB;
+
+    //Calculate the sides of rect A
+    leftA = a.x;
+    rightA = a.x + a.w;
+    topA = a.y;
+    bottomA = a.y + a.h;
+
+    //Calculate the sides of rect B
+    leftB = b.x;
+    rightB = b.x + b.w;
+    topB = b.y;
+    bottomB = b.y + b.h;
+
+    //If any of the sides from A are outside of B
+    if( bottomA <= topB )
+    {
+        return false;
+    }
+
+    if( topA >= bottomB )
+    {
+        return false;
+    }
+
+    if( rightA <= leftB )
+    {
+        return false;
+    }
+
+    if( leftA >= rightB )
+    {
+        return false;
+    }
+
+    //If none of the sides from A are outside B
+    return true;
+}
+
+int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
-	if( !init_motion() )
+	if( !init_collision_detection() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
 	else
 	{
 		//Load media
-		if( !loadMedia_motion() )
+		if( !loadMedia_collision_detection() )
 		{
 			printf( "Failed to load media!\n" );
 		}
@@ -463,8 +489,15 @@ int main_motion( int argc, char* args[] )
 			SDL_Event e;
 
 			//The dot that will be moving around on the screen
-			Dot_motion dot;
+			Dot_collision_detection dot;
 
+			//Set the wall
+			SDL_Rect wall;
+			wall.x = 300;
+			wall.y = 40;
+			wall.w = 40;
+			wall.h = 400;
+			
 			//While application is running
 			while( !quit )
 			{
@@ -481,24 +514,28 @@ int main_motion( int argc, char* args[] )
 					dot.handleEvent( e );
 				}
 
-				//Move the dot
-				dot.move();
+				//Move the dot and check collision
+				dot.move( wall );
 
 				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer_motion, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer_motion);
+				SDL_SetRenderDrawColor( gRenderer_collision_detection, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_RenderClear( gRenderer_collision_detection);
 
-				//Render objects
+				//Render wall
+				SDL_SetRenderDrawColor( gRenderer_collision_detection, 0x00, 0x00, 0x00, 0xFF );
+				SDL_RenderDrawRect( gRenderer_collision_detection, &wall );
+				
+				//Render dot
 				dot.render();
 
 				//Update screen
-				SDL_RenderPresent( gRenderer_motion);
+				SDL_RenderPresent( gRenderer_collision_detection);
 			}
 		}
 	}
 
 	//Free resources and close SDL
-	close_motion();
+	close_collision_detection();
 
 	return 0;
 }
