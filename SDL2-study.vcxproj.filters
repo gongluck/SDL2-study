@@ -102,5 +102,8 @@
     <ClCompile Include="src\29_circular_collision_detection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\30_scrolling.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

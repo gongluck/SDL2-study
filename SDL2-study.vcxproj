@@ -48,6 +48,7 @@
     <ClCompile Include="src\27_collision_detection.cpp" />
     <ClCompile Include="src\28_per-pixel_collision_detection.cpp" />
     <ClCompile Include="src\29_circular_collision_detection.cpp" />
+    <ClCompile Include="src\30_scrolling.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

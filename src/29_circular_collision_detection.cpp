@@ -522,7 +522,7 @@ double distanceSquared_circular_collision_detection( int x1, int y1, int x2, int
 	return deltaX*deltaX + deltaY*deltaY;
 }
 
-int main( int argc, char* args[] )
+int main_circular_collision_detection( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_circular_collision_detection() )
