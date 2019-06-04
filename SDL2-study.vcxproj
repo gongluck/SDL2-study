@@ -50,6 +50,8 @@
     <ClCompile Include="src\29_circular_collision_detection.cpp" />
     <ClCompile Include="src\30_scrolling.cpp" />
     <ClCompile Include="src\31_scrolling_backgrounds.cpp" />
+    <ClCompile Include="src\32_text_input_and_clipboard_handling.cpp" />
+    <ClCompile Include="src\33_file_reading_and_writing.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

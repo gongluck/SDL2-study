@@ -416,7 +416,7 @@ void close_scrolling_backgrounds()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_scrolling_backgrounds( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_scrolling_backgrounds() )
