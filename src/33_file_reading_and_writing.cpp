@@ -419,7 +419,7 @@ void close_file_reading_and_writing()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_file_reading_and_writing( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_file_reading_and_writing() )

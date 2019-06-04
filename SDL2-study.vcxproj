@@ -52,6 +52,7 @@
     <ClCompile Include="src\31_scrolling_backgrounds.cpp" />
     <ClCompile Include="src\32_text_input_and_clipboard_handling.cpp" />
     <ClCompile Include="src\33_file_reading_and_writing.cpp" />
+    <ClCompile Include="src\34_audio_recording.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
