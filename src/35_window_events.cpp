@@ -506,7 +506,7 @@ void close_window_events()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_window_events( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_window_events() )
