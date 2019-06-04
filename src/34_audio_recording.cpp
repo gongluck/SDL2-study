@@ -438,7 +438,7 @@ void audioPlaybackCallback_audio_recording( void* userdata, Uint8* stream, int l
 	gBufferBytePosition_audio_recording += len;
 }
 
-int main( int argc, char* args[] )
+int main_audio_recording( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_audio_recording() )

@@ -184,7 +184,7 @@ int LTexture_animated_sprites_and_vsync::getHeight()
 	return mHeight;
 }
 
-bool init()
+bool init_animated_sprites_and_vsync()
 {
 	//Initialization flag
 	bool success = true;
@@ -295,7 +295,7 @@ void close_animated_sprites_and_vsync()
 int main_animated_sprites_and_vsync( int argc, char* args[] )
 {
 	//Start up SDL and create window
-	if( !init() )
+	if( !init_animated_sprites_and_vsync() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
