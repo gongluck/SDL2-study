@@ -561,7 +561,7 @@ void close_particle_engines()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_particle_engines( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_particle_engines() )
