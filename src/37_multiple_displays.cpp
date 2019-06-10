@@ -11,14 +11,11 @@ and may not be redistributed without written permission.*/
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
-//Total windows
-const int TOTAL_WINDOWS = 3;
-
-class LWindow_multiple_windows
+class LWindow_multiple_displays
 {
 	public:
 		//Intializes internals
-		LWindow_multiple_windows();
+		LWindow_multiple_displays();
 
 		//Creates window
 		bool init();
@@ -50,6 +47,7 @@ class LWindow_multiple_windows
 		SDL_Window* mWindow;
 		SDL_Renderer* mRenderer;
 		int mWindowID;
+		int mWindowDisplayID;
 
 		//Window dimensions
 		int mWidth;
@@ -64,15 +62,19 @@ class LWindow_multiple_windows
 };
 
 //Starts up SDL and creates window
-bool init_multiple_windows();
+bool init_multiple_displays();
 
 //Frees media and shuts down SDL
-void close_multiple_windows();
+void close_multiple_displays();
 
-//Our custom windows
-LWindow_multiple_windows gWindows_multiple_windows[ TOTAL_WINDOWS ];
+//Our custom window
+LWindow_multiple_displays gWindow_multiple_displays;
 
-LWindow_multiple_windows::LWindow_multiple_windows()
+//Display data
+int gTotalDisplays_multiple_displays = 0;
+SDL_Rect* gDisplayBounds_multiple_displays = NULL;
+
+LWindow_multiple_displays::LWindow_multiple_displays()
 {
 	//Initialize non-existant window
 	mWindow = NULL;
@@ -83,12 +85,13 @@ LWindow_multiple_windows::LWindow_multiple_windows()
 	mFullScreen = false;
 	mShown = false;
 	mWindowID = -1;
+	mWindowDisplayID = -1;
 	
 	mWidth = 0;
 	mHeight = 0;
 }
 
-bool LWindow_multiple_windows::init()
+bool LWindow_multiple_displays::init()
 {
 	//Create window
 	mWindow = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE );
@@ -112,8 +115,9 @@ bool LWindow_multiple_windows::init()
 			//Initialize renderer color
 			SDL_SetRenderDrawColor( mRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
 
-			//Grab window identifier
+			//Grab window identifiers
 			mWindowID = SDL_GetWindowID( mWindow );
+			mWindowDisplayID = SDL_GetWindowDisplayIndex( mWindow );
 
 			//Flag as opened
 			mShown = true;
@@ -127,16 +131,22 @@ bool LWindow_multiple_windows::init()
 	return mWindow != NULL && mRenderer != NULL;
 }
 
-void LWindow_multiple_windows::handleEvent( SDL_Event& e )
+void LWindow_multiple_displays::handleEvent( SDL_Event& e )
 {
+	//Caption update flag
+	bool updateCaption = false;
+
 	//If an event was detected for this window
 	if( e.type == SDL_WINDOWEVENT && e.window.windowID == mWindowID )
 	{
-		//Caption update flag
-		bool updateCaption = false;
-
 		switch( e.window.event )
 		{
+			//Window moved
+			case SDL_WINDOWEVENT_MOVED:
+			mWindowDisplayID = SDL_GetWindowDisplayIndex( mWindow );
+			updateCaption = true;
+			break;
+
 			//Window appeared
 			case SDL_WINDOWEVENT_SHOWN:
 			mShown = true;
@@ -203,18 +213,55 @@ void LWindow_multiple_windows::handleEvent( SDL_Event& e )
 			SDL_HideWindow( mWindow );
 			break;
 		}
+	}
+	else if( e.type == SDL_KEYDOWN )
+	{
+		//Display change flag
+		bool switchDisplay = false;
 
-		//Update window caption with new data
-		if( updateCaption )
+		//Cycle through displays on up/down
+		switch( e.key.keysym.sym )
 		{
-			std::stringstream caption;
-			caption << "SDL Tutorial - ID: " << mWindowID << " MouseFocus:" << ( ( mMouseFocus ) ? "On" : "Off" ) << " KeyboardFocus:" << ( ( mKeyboardFocus ) ? "On" : "Off" );
-			SDL_SetWindowTitle( mWindow, caption.str().c_str() );
+			case SDLK_UP:
+			++mWindowDisplayID;
+			switchDisplay = true;
+			break;
+
+			case SDLK_DOWN:
+			--mWindowDisplayID;
+			switchDisplay = true;
+			break;
 		}
+
+		//Display needs to be updated
+		if( switchDisplay )
+		{
+			//Bound display index
+			if( mWindowDisplayID < 0 )
+			{
+				mWindowDisplayID = gTotalDisplays_multiple_displays - 1;
+			}
+			else if( mWindowDisplayID >= gTotalDisplays_multiple_displays)
+			{
+				mWindowDisplayID = 0;
+			}
+
+			//Move window to center of next display
+			SDL_SetWindowPosition( mWindow, gDisplayBounds_multiple_displays[ mWindowDisplayID ].x + ( gDisplayBounds_multiple_displays[ mWindowDisplayID ].w - mWidth ) / 2, gDisplayBounds_multiple_displays[ mWindowDisplayID ].y + ( gDisplayBounds_multiple_displays[ mWindowDisplayID ].h - mHeight ) / 2 );
+			updateCaption = true;
+		}
+	}
+
+	//Update window caption with new data
+	if( updateCaption )
+	{
+		std::stringstream caption;
+		caption << "SDL Tutorial - ID: " << mWindowID << " Display: " << mWindowDisplayID << " MouseFocus:" << ( ( mMouseFocus ) ? "On" : "Off" ) << " KeyboardFocus:" << ( ( mKeyboardFocus ) ? "On" : "Off" );
+		SDL_SetWindowTitle( mWindow, caption.str().c_str() );
 	}
 }
 
-void LWindow_multiple_windows::focus()
+void LWindow_multiple_displays::focus()
 {
 	//Restore window if needed
 	if( !mShown )
@@ -226,7 +273,7 @@ void LWindow_multiple_windows::focus()
 	SDL_RaiseWindow( mWindow );
 }
 
-void LWindow_multiple_windows::render()
+void LWindow_multiple_displays::render()
 {
 	if( !mMinimized )
 	{	
@@ -239,7 +286,7 @@ void LWindow_multiple_windows::render()
 	}
 }
 
-void LWindow_multiple_windows::free()
+void LWindow_multiple_displays::free()
 {
 	if( mWindow != NULL )
 	{
@@ -252,37 +299,37 @@ void LWindow_multiple_windows::free()
 	mHeight = 0;
 }
 
-int LWindow_multiple_windows::getWidth()
+int LWindow_multiple_displays::getWidth()
 {
 	return mWidth;
 }
 
-int LWindow_multiple_windows::getHeight()
+int LWindow_multiple_displays::getHeight()
 {
 	return mHeight;
 }
 
-bool LWindow_multiple_windows::hasMouseFocus()
+bool LWindow_multiple_displays::hasMouseFocus()
 {
 	return mMouseFocus;
 }
 
-bool LWindow_multiple_windows::hasKeyboardFocus()
+bool LWindow_multiple_displays::hasKeyboardFocus()
 {
 	return mKeyboardFocus;
 }
 
-bool LWindow_multiple_windows::isMinimized()
+bool LWindow_multiple_displays::isMinimized()
 {
 	return mMinimized;
 }
 
-bool LWindow_multiple_windows::isShown()
+bool LWindow_multiple_displays::isShown()
 {
 	return mShown;
 }
 
-bool init_multiple_windows()
+bool init_multiple_displays()
 {
 	//Initialization flag
 	bool success = true;
@@ -301,10 +348,24 @@ bool init_multiple_windows()
 			printf( "Warning: Linear texture filtering not enabled!" );
 		}
 
-		//Create window
-		if( !gWindows_multiple_windows[ 0 ].init() )
+		//Get number of displays
+		gTotalDisplays_multiple_displays = SDL_GetNumVideoDisplays();
+		if( gTotalDisplays_multiple_displays < 2 )
 		{
-			printf( "Window 0 could not be created!\n" );
+			printf( "Warning: Only one display connected!" );
+		}
+		
+		//Get bounds of each display
+		gDisplayBounds_multiple_displays = new SDL_Rect[ gTotalDisplays_multiple_displays];
+		for( int i = 0; i < gTotalDisplays_multiple_displays; ++i )
+		{
+			SDL_GetDisplayBounds( i, &gDisplayBounds_multiple_displays[ i ] );
+		}
+
+		//Create window
+		if( !gWindow_multiple_displays.init() )
+		{
+			printf( "Window could not be created!\n" );
 			success = false;
 		}
 	}
@@ -312,33 +373,28 @@ bool init_multiple_windows()
 	return success;
 }
 
-void close_multiple_windows()
+void close_multiple_displays()
 {
-	//Destroy windows
-	for( int i = 0; i < TOTAL_WINDOWS; ++i )
-	{
-		gWindows_multiple_windows[ i ].free();
-	}
+	//Destroy window
+	gWindow_multiple_displays.free();
+
+	//Deallocate bounds
+	delete[] gDisplayBounds_multiple_displays;
+	gDisplayBounds_multiple_displays = NULL;
 
 	//Quit SDL subsystems
 	SDL_Quit();
 }
 
-int main_multiple_windows( int argc, char* args[] )
+int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
-	if( !init_multiple_windows() )
+	if( !init_multiple_displays() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
 	else
 	{
-		//Initialize the rest of the windows
-		for( int i = 1; i < TOTAL_WINDOWS; ++i )
-		{
-			gWindows_multiple_windows[ i ].init();
-		}
-
 		//Main loop flag
 		bool quit = false;
 
@@ -358,58 +414,16 @@ int main_multiple_windows( int argc, char* args[] )
 				}
 
 				//Handle window events
-				for( int i = 0; i < TOTAL_WINDOWS; ++i )
-				{
-					gWindows_multiple_windows[ i ].handleEvent( e );
-				}
-
-				//Pull up window
-				if( e.type == SDL_KEYDOWN )
-				{
-					switch( e.key.keysym.sym )
-					{
-						case SDLK_1:
-						gWindows_multiple_windows[ 0 ].focus();
-						break;
-
-						case SDLK_2:
-						gWindows_multiple_windows[ 1 ].focus();
-						break;
-							
-						case SDLK_3:
-						gWindows_multiple_windows[ 2 ].focus();
-						break;
-					}
-				}
+				gWindow_multiple_displays.handleEvent( e );
 			}
 
-			//Update all windows
-			for( int i = 0; i < TOTAL_WINDOWS; ++i )
-			{
-				gWindows_multiple_windows[ i ].render();
-			}
-				
-			//Check all windows
-			bool allWindowsClosed = true;
-			for( int i = 0; i < TOTAL_WINDOWS; ++i )
-			{
-				if( gWindows_multiple_windows[ i ].isShown() )
-				{
-					allWindowsClosed = false;
-					break;
-				}
-			}
-
-			//Application closed all windows
-			if( allWindowsClosed )
-			{
-				quit = true;
-			}
+			//Update window
+			gWindow_multiple_displays.render();
 		}
 	}
 
 	//Free resources and close SDL
-	close_multiple_windows();
+	close_multiple_displays();
 
 	return 0;
 }
