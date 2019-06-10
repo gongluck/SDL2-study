@@ -386,7 +386,7 @@ void close_multiple_displays()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_multiple_displays( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_multiple_displays() )

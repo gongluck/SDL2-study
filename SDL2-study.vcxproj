@@ -56,6 +56,7 @@
     <ClCompile Include="src\35_window_events.cpp" />
     <ClCompile Include="src\36_multiple_windows.cpp" />
     <ClCompile Include="src\37_multiple_displays.cpp" />
+    <ClCompile Include="src\38_particle_engines.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
