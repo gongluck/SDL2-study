@@ -58,6 +58,7 @@
     <ClCompile Include="src\37_multiple_displays.cpp" />
     <ClCompile Include="src\38_particle_engines.cpp" />
     <ClCompile Include="src\39_tiling.cpp" />
+    <ClCompile Include="src\40_texture_manipulation.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

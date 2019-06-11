@@ -758,7 +758,7 @@ bool touchesWall_tiling( SDL_Rect box, Tile_tiling* tiles[] )
     return false;
 }
 
-int main( int argc, char* args[] )
+int main_tiling( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_tiling() )
