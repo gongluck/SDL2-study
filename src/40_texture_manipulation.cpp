@@ -431,7 +431,7 @@ void close_texture_manipulation()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_texture_manipulation( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_texture_manipulation() )
