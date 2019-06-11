@@ -60,6 +60,7 @@
     <ClCompile Include="src\39_tiling.cpp" />
     <ClCompile Include="src\40_texture_manipulation.cpp" />
     <ClCompile Include="src\41_bitmap_fonts.cpp" />
+    <ClCompile Include="src\42_texture_streaming.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

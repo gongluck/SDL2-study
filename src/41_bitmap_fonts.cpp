@@ -672,7 +672,7 @@ void close_bitmap_fonts()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_bitmap_fonts( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_bitmap_fonts() )
