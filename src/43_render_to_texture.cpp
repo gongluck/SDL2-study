@@ -1,7 +1,7 @@
 /*This source code copyrighted by Lazy Foo' Productions (2004-2019)
 and may not be redistributed without written permission.*/
 
-//Using SDL, SDL_image, standard IO, and strings
+//Using SDL, SDL_image, standard IO, and, strings
 #include <SDL.h>
 #include <SDL_image.h>
 #include <stdio.h>
@@ -12,14 +12,14 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 //Texture wrapper class
-class LTexture_texture_streaming
+class LTexture_render_to_texture
 {
 	public:
 		//Initializes variables
-		LTexture_texture_streaming();
+		LTexture_render_to_texture();
 
 		//Deallocates memory
-		~LTexture_texture_streaming();
+		~LTexture_render_to_texture();
 
 		//Loads image at specified path
 		bool loadFromFile( std::string path );
@@ -30,7 +30,7 @@ class LTexture_texture_streaming
 		#endif
 
 		//Creates blank texture
-		bool createBlank( int width, int height );
+		bool createBlank( int width, int height, SDL_TextureAccess = SDL_TEXTUREACCESS_STREAMING );
 
 		//Deallocates texture
 		void free();
@@ -46,6 +46,9 @@ class LTexture_texture_streaming
 		
 		//Renders texture at given point
 		void render( int x, int y, SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE );
+
+		//Set self as render target
+		void setAsRenderTarget();
 
 		//Gets image dimensions
 		int getWidth();
@@ -70,51 +73,25 @@ class LTexture_texture_streaming
 		int mHeight;
 };
 
-//A test animation stream
-class DataStream_texture_streaming
-{
-	public:
-		//Initializes internals
-		DataStream_texture_streaming();
-
-		//Loads initial data
-		bool loadMedia();
-
-		//Deallocator
-		void free();
-
-		//Gets current frame data
-		void* getBuffer();
-
-	private:
-		//Internal data
-		SDL_Surface* mImages[ 4 ];
-		int mCurrentImage;
-		int mDelayFrames;
-};
-
 //Starts up SDL and creates window
-bool init_texture_streaming();
+bool init_render_to_texture();
 
 //Loads media
-bool loadMedia_texture_streaming();
+bool loadMedia_render_to_texture();
 
 //Frees media and shuts down SDL
-void close_texture_streaming();
+void close_render_to_texture();
 
 //The window we'll be rendering to
-SDL_Window* gWindow_texture_streaming = NULL;
+SDL_Window* gWindow_render_to_texture = NULL;
 
 //The window renderer
-SDL_Renderer* gRenderer_texture_streaming = NULL;
+SDL_Renderer* gRenderer_render_to_texture = NULL;
 
 //Scene textures
-LTexture_texture_streaming gStreamingTexture_texture_streaming;
+LTexture_render_to_texture gTargetTexture_render_to_texture;
 
-//Animation stream
-DataStream_texture_streaming gDataStream_texture_streaming;
-
-LTexture_texture_streaming::LTexture_texture_streaming()
+LTexture_render_to_texture::LTexture_render_to_texture()
 {
 	//Initialize
 	mTexture = NULL;
@@ -124,13 +101,13 @@ LTexture_texture_streaming::LTexture_texture_streaming()
 	mPitch = 0;
 }
 
-LTexture_texture_streaming::~LTexture_texture_streaming()
+LTexture_render_to_texture::~LTexture_render_to_texture()
 {
 	//Deallocate
 	free();
 }
 
-bool LTexture_texture_streaming::loadFromFile( std::string path )
+bool LTexture_render_to_texture::loadFromFile( std::string path )
 {
 	//Get rid of preexisting texture
 	free();
@@ -155,7 +132,7 @@ bool LTexture_texture_streaming::loadFromFile( std::string path )
 		else
 		{
 			//Create blank streamable texture
-			newTexture = SDL_CreateTexture( gRenderer_texture_streaming, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, formattedSurface->w, formattedSurface->h );
+			newTexture = SDL_CreateTexture( gRenderer_render_to_texture, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, formattedSurface->w, formattedSurface->h );
 			if( newTexture == NULL )
 			{
 				printf( "Unable to create blank texture! SDL Error: %s\n", SDL_GetError() );
@@ -211,7 +188,7 @@ bool LTexture_texture_streaming::loadFromFile( std::string path )
 }
 
 #if defined(_SDL_TTF_H) || defined(SDL_TTF_H)
-bool LTexture_texture_streaming::loadFromRenderedText( std::string textureText, SDL_Color textColor )
+bool LTexture::loadFromRenderedText( std::string textureText, SDL_Color textColor )
 {
 	//Get rid of preexisting texture
 	free();
@@ -247,10 +224,10 @@ bool LTexture_texture_streaming::loadFromRenderedText( std::string textureText, 
 }
 #endif
 		
-bool LTexture_texture_streaming::createBlank( int width, int height )
+bool LTexture_render_to_texture::createBlank( int width, int height, SDL_TextureAccess access )
 {
 	//Create uninitialized texture
-	mTexture = SDL_CreateTexture( gRenderer_texture_streaming, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, width, height );
+	mTexture = SDL_CreateTexture( gRenderer_render_to_texture, SDL_PIXELFORMAT_RGBA8888, access, width, height );
 	if( mTexture == NULL )
 	{
 		printf( "Unable to create blank texture! SDL Error: %s\n", SDL_GetError() );
@@ -264,7 +241,7 @@ bool LTexture_texture_streaming::createBlank( int width, int height )
 	return mTexture != NULL;
 }
 
-void LTexture_texture_streaming::free()
+void LTexture_render_to_texture::free()
 {
 	//Free texture if it exists
 	if( mTexture != NULL )
@@ -278,25 +255,25 @@ void LTexture_texture_streaming::free()
 	}
 }
 
-void LTexture_texture_streaming::setColor( Uint8 red, Uint8 green, Uint8 blue )
+void LTexture_render_to_texture::setColor( Uint8 red, Uint8 green, Uint8 blue )
 {
 	//Modulate texture rgb
 	SDL_SetTextureColorMod( mTexture, red, green, blue );
 }
 
-void LTexture_texture_streaming::setBlendMode( SDL_BlendMode blending )
+void LTexture_render_to_texture::setBlendMode( SDL_BlendMode blending )
 {
 	//Set blending function
 	SDL_SetTextureBlendMode( mTexture, blending );
 }
 		
-void LTexture_texture_streaming::setAlpha( Uint8 alpha )
+void LTexture_render_to_texture::setAlpha( Uint8 alpha )
 {
 	//Modulate texture alpha
 	SDL_SetTextureAlphaMod( mTexture, alpha );
 }
 
-void LTexture_texture_streaming::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
+void LTexture_render_to_texture::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
@@ -309,20 +286,26 @@ void LTexture_texture_streaming::render( int x, int y, SDL_Rect* clip, double an
 	}
 
 	//Render to screen
-	SDL_RenderCopyEx( gRenderer_texture_streaming, mTexture, clip, &renderQuad, angle, center, flip );
+	SDL_RenderCopyEx( gRenderer_render_to_texture, mTexture, clip, &renderQuad, angle, center, flip );
 }
 
-int LTexture_texture_streaming::getWidth()
+void LTexture_render_to_texture::setAsRenderTarget()
+{
+	//Make self render target
+	SDL_SetRenderTarget( gRenderer_render_to_texture, mTexture );
+}
+
+int LTexture_render_to_texture::getWidth()
 {
 	return mWidth;
 }
 
-int LTexture_texture_streaming::getHeight()
+int LTexture_render_to_texture::getHeight()
 {
 	return mHeight;
 }
 
-bool LTexture_texture_streaming::lockTexture()
+bool LTexture_render_to_texture::lockTexture()
 {
 	bool success = true;
 
@@ -345,7 +328,7 @@ bool LTexture_texture_streaming::lockTexture()
 	return success;
 }
 
-bool LTexture_texture_streaming::unlockTexture()
+bool LTexture_render_to_texture::unlockTexture()
 {
 	bool success = true;
 
@@ -366,12 +349,12 @@ bool LTexture_texture_streaming::unlockTexture()
 	return success;
 }
 
-void* LTexture_texture_streaming::getPixels()
+void* LTexture_render_to_texture::getPixels()
 {
 	return mPixels;
 }
 
-void LTexture_texture_streaming::copyPixels( void* pixels )
+void LTexture_render_to_texture::copyPixels( void* pixels )
 {
 	//Texture is locked
 	if( mPixels != NULL )
@@ -381,12 +364,12 @@ void LTexture_texture_streaming::copyPixels( void* pixels )
 	}
 }
 
-int LTexture_texture_streaming::getPitch()
+int LTexture_render_to_texture::getPitch()
 {
 	return mPitch;
 }
 
-Uint32 LTexture_texture_streaming::getPixel32( unsigned int x, unsigned int y )
+Uint32 LTexture_render_to_texture::getPixel32( unsigned int x, unsigned int y )
 {
     //Convert the pixels to 32 bit
     Uint32 *pixels = (Uint32*)mPixels;
@@ -395,69 +378,7 @@ Uint32 LTexture_texture_streaming::getPixel32( unsigned int x, unsigned int y )
     return pixels[ ( y * ( mPitch / 4 ) ) + x ];
 }
 
-DataStream_texture_streaming::DataStream_texture_streaming()
-{
-	mImages[ 0 ] = NULL;
-	mImages[ 1 ] = NULL;
-	mImages[ 2 ] = NULL;
-	mImages[ 3 ] = NULL;
-
-	mCurrentImage = 0;
-	mDelayFrames = 4;
-}
-
-bool DataStream_texture_streaming::loadMedia()
-{
-	bool success = true;
-	
-	for( int i = 0; i < 4; ++i )
-	{
-		char path[ 64 ] = "";
-		sprintf( path, "foo_walk_%d.png", i );
-
-		SDL_Surface* loadedSurface = IMG_Load( path );
-		if( loadedSurface == NULL )
-		{
-			printf( "Unable to load %s! SDL_image error: %s\n", path, IMG_GetError() );
-			success = false;
-		}
-		else
-		{
-			mImages[ i ] = SDL_ConvertSurfaceFormat( loadedSurface, SDL_PIXELFORMAT_RGBA8888, 0 );
-		}
-
-		SDL_FreeSurface( loadedSurface );
-	}
-
-	return success;
-}
-
-void DataStream_texture_streaming::free()
-{
-	for( int i = 0; i < 4; ++i )
-	{
-		SDL_FreeSurface( mImages[ i ] );
-	}
-}
-
-void* DataStream_texture_streaming::getBuffer()
-{
-	--mDelayFrames;
-	if( mDelayFrames == 0 )
-	{
-		++mCurrentImage;
-		mDelayFrames = 4;
-	}
-
-	if( mCurrentImage == 4 )
-	{
-		mCurrentImage = 0;
-	}
-
-	return mImages[ mCurrentImage ]->pixels;
-}
-
-bool init_texture_streaming()
+bool init_render_to_texture()
 {
 	//Initialization flag
 	bool success = true;
@@ -476,12 +397,9 @@ bool init_texture_streaming()
 			printf( "Warning: Linear texture filtering not enabled!" );
 		}
 
-		//Seed random
-		srand( SDL_GetTicks() );
-
 		//Create window
-		gWindow_texture_streaming = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-		if( gWindow_texture_streaming == NULL )
+		gWindow_render_to_texture = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		if( gWindow_render_to_texture == NULL )
 		{
 			printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
 			success = false;
@@ -489,8 +407,8 @@ bool init_texture_streaming()
 		else
 		{
 			//Create renderer for window
-			gRenderer_texture_streaming = SDL_CreateRenderer( gWindow_texture_streaming, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
-			if( gRenderer_texture_streaming == NULL )
+			gRenderer_render_to_texture = SDL_CreateRenderer( gWindow_render_to_texture, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+			if( gRenderer_render_to_texture == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
 				success = false;
@@ -498,7 +416,7 @@ bool init_texture_streaming()
 			else
 			{
 				//Initialize renderer color
-				SDL_SetRenderDrawColor( gRenderer_texture_streaming, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_SetRenderDrawColor( gRenderer_render_to_texture, 0xFF, 0xFF, 0xFF, 0xFF );
 
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
@@ -514,56 +432,48 @@ bool init_texture_streaming()
 	return success;
 }
 
-bool loadMedia_texture_streaming()
+bool loadMedia_render_to_texture()
 {
 	//Loading success flag
 	bool success = true;
 
-	//Load blank texture
-	if( !gStreamingTexture_texture_streaming.createBlank( 64, 205 ) )
+	//Load texture target
+	if( !gTargetTexture_render_to_texture.createBlank( SCREEN_WIDTH, SCREEN_HEIGHT, SDL_TEXTUREACCESS_TARGET ) )
 	{
-		printf( "Failed to create streaming texture!\n" );
-		success = false;
-	}
-
-	//Load data stream
-	if( !gDataStream_texture_streaming.loadMedia() )
-	{		
-		printf( "Unable to load data stream!\n" );
+		printf( "Failed to create target texture!\n" );
 		success = false;
 	}
 
 	return success;
 }
 
-void close_texture_streaming()
+void close_render_to_texture()
 {
 	//Free loaded images
-	gStreamingTexture_texture_streaming.free();
-	gDataStream_texture_streaming.free();
+	gTargetTexture_render_to_texture.free();
 
 	//Destroy window	
-	SDL_DestroyRenderer( gRenderer_texture_streaming);
-	SDL_DestroyWindow( gWindow_texture_streaming);
-	gWindow_texture_streaming = NULL;
-	gRenderer_texture_streaming = NULL;
+	SDL_DestroyRenderer( gRenderer_render_to_texture);
+	SDL_DestroyWindow( gWindow_render_to_texture);
+	gWindow_render_to_texture = NULL;
+	gRenderer_render_to_texture = NULL;
 
 	//Quit SDL subsystems
 	IMG_Quit();
 	SDL_Quit();
 }
 
-int main_texture_streaming( int argc, char* args[] )
+int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
-	if( !init_texture_streaming() )
+	if( !init_render_to_texture() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
 	else
 	{
 		//Load media
-		if( !loadMedia_texture_streaming() )
+		if( !loadMedia_render_to_texture() )
 		{
 			printf( "Failed to load media!\n" );
 		}
@@ -575,8 +485,12 @@ int main_texture_streaming( int argc, char* args[] )
 			//Event handler
 			SDL_Event e;
 
+			//Rotation variables
+			double angle = 0;
+			SDL_Point screenCenter = { SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
+
 			//While application is running
-			while( !quit )
+			while( quit == false )
 			{
 				//Handle events on queue
 				while( SDL_PollEvent( &e ) != 0 )
@@ -588,26 +502,55 @@ int main_texture_streaming( int argc, char* args[] )
 					}
 				}
 
+				//rotate
+				angle += 2;
+				if( angle > 360 )
+				{
+					angle -= 360;
+				}
+
+				//Set self as render target
+				gTargetTexture_render_to_texture.setAsRenderTarget();
+
 				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer_texture_streaming, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer_texture_streaming);
+				SDL_SetRenderDrawColor( gRenderer_render_to_texture, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_RenderClear( gRenderer_render_to_texture);
 
-				//Copy frame from buffer
-				gStreamingTexture_texture_streaming.lockTexture();
-				gStreamingTexture_texture_streaming.copyPixels( gDataStream_texture_streaming.getBuffer() );
-				gStreamingTexture_texture_streaming.unlockTexture();
+				//Render red filled quad
+				SDL_Rect fillRect = { SCREEN_WIDTH / 4, SCREEN_HEIGHT / 4, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
+				SDL_SetRenderDrawColor( gRenderer_render_to_texture, 0xFF, 0x00, 0x00, 0xFF );
+				SDL_RenderFillRect( gRenderer_render_to_texture, &fillRect );
 
-				//Render frame
-				gStreamingTexture_texture_streaming.render( ( SCREEN_WIDTH - gStreamingTexture_texture_streaming.getWidth() ) / 2, ( SCREEN_HEIGHT - gStreamingTexture_texture_streaming.getHeight() ) / 2 );
+				//Render green outlined quad
+				SDL_Rect outlineRect = { SCREEN_WIDTH / 6, SCREEN_HEIGHT / 6, SCREEN_WIDTH * 2 / 3, SCREEN_HEIGHT * 2 / 3 };
+				SDL_SetRenderDrawColor( gRenderer_render_to_texture, 0x00, 0xFF, 0x00, 0xFF );
+				SDL_RenderDrawRect( gRenderer_render_to_texture, &outlineRect );
+				
+				//Draw blue horizontal line
+				SDL_SetRenderDrawColor( gRenderer_render_to_texture, 0x00, 0x00, 0xFF, 0xFF );
+				SDL_RenderDrawLine( gRenderer_render_to_texture, 0, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT / 2 );
+
+				//Draw vertical line of yellow dots
+				SDL_SetRenderDrawColor( gRenderer_render_to_texture, 0xFF, 0xFF, 0x00, 0xFF );
+				for( int i = 0; i < SCREEN_HEIGHT; i += 4 )
+				{
+					SDL_RenderDrawPoint( gRenderer_render_to_texture, SCREEN_WIDTH / 2, i );
+				}
+
+				//Reset render target
+				SDL_SetRenderTarget( gRenderer_render_to_texture, NULL );
+
+				//Show rendered to texture
+				gTargetTexture_render_to_texture.render( 0, 0, NULL, angle, &screenCenter );
 
 				//Update screen
-				SDL_RenderPresent( gRenderer_texture_streaming);
+				SDL_RenderPresent( gRenderer_render_to_texture);
 			}
 		}
 	}
 
 	//Free resources and close SDL
-	close_texture_streaming();
+	close_render_to_texture();
 
 	return 0;
 }
