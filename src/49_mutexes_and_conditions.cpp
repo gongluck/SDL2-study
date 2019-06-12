@@ -11,16 +11,17 @@ and may not be redistributed without written permission.*/
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
+const int SCREEN_FPS = 60;
 
 //Texture wrapper class
-class LTexture_atomic_operations
+class LTexture_mutexes_and_conditions
 {
 	public:
 		//Initializes variables
-		LTexture_atomic_operations();
+		LTexture_mutexes_and_conditions();
 
 		//Deallocates memory
-		~LTexture_atomic_operations();
+		~LTexture_mutexes_and_conditions();
 
 		//Loads image at specified path
 		bool loadFromFile( std::string path );
@@ -75,33 +76,40 @@ class LTexture_atomic_operations
 };
 
 //Starts up SDL and creates window
-bool init_atomic_operations();
+bool init_mutexes_and_conditions();
 
 //Loads media
-bool loadMedia_atomic_operations();
+bool loadMedia_mutexes_and_conditions();
 
 //Frees media and shuts down SDL
-void close_atomic_operations();
+void close_mutexes_and_conditions();
 
-//Our worker function
-int worker_atomic_operations( void* data );
+//Our worker functions
+int producer_mutexes_and_conditions( void* data );
+int consumer_mutexes_and_conditions( void* data );
+void produce_mutexes_and_conditions();
+void consume_mutexes_and_conditions();
 
 //The window we'll be rendering to
-SDL_Window* gWindow_atomic_operations = NULL;
+SDL_Window* gWindow_mutexes_and_conditions = NULL;
 
 //The window renderer
-SDL_Renderer* gRenderer_atomic_operations = NULL;
+SDL_Renderer* gRenderer_mutexes_and_conditions = NULL;
 
 //Scene textures
-LTexture_atomic_operations gSplashTexture_atomic_operations;
+LTexture_mutexes_and_conditions gSplashTexture_mutexes_and_conditions;
 
-//Data access spin lock
-SDL_SpinLock gDataLock_atomic_operations = 0;
+//The protective mutex
+SDL_mutex* gBufferLock_mutexes_and_conditions = NULL;
+
+//The conditions
+SDL_cond* gCanProduce_mutexes_and_conditions = NULL;
+SDL_cond* gCanConsume_mutexes_and_conditions = NULL;
 
 //The "data buffer"
-int gData_atomic_operations = -1;
+int gData_mutexes_and_conditions = -1;
 
-LTexture_atomic_operations::LTexture_atomic_operations()
+LTexture_mutexes_and_conditions::LTexture_mutexes_and_conditions()
 {
 	//Initialize
 	mTexture = NULL;
@@ -111,13 +119,13 @@ LTexture_atomic_operations::LTexture_atomic_operations()
 	mPitch = 0;
 }
 
-LTexture_atomic_operations::~LTexture_atomic_operations()
+LTexture_mutexes_and_conditions::~LTexture_mutexes_and_conditions()
 {
 	//Deallocate
 	free();
 }
 
-bool LTexture_atomic_operations::loadFromFile( std::string path )
+bool LTexture_mutexes_and_conditions::loadFromFile( std::string path )
 {
 	//Get rid of preexisting texture
 	free();
@@ -142,7 +150,7 @@ bool LTexture_atomic_operations::loadFromFile( std::string path )
 		else
 		{
 			//Create blank streamable texture
-			newTexture = SDL_CreateTexture( gRenderer_atomic_operations, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, formattedSurface->w, formattedSurface->h );
+			newTexture = SDL_CreateTexture( gRenderer_mutexes_and_conditions, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, formattedSurface->w, formattedSurface->h );
 			if( newTexture == NULL )
 			{
 				printf( "Unable to create blank texture! SDL Error: %s\n", SDL_GetError() );
@@ -234,10 +242,10 @@ bool LTexture::loadFromRenderedText( std::string textureText, SDL_Color textColo
 }
 #endif
 		
-bool LTexture_atomic_operations::createBlank( int width, int height, SDL_TextureAccess access )
+bool LTexture_mutexes_and_conditions::createBlank( int width, int height, SDL_TextureAccess access )
 {
 	//Create uninitialized texture
-	mTexture = SDL_CreateTexture( gRenderer_atomic_operations, SDL_PIXELFORMAT_RGBA8888, access, width, height );
+	mTexture = SDL_CreateTexture( gRenderer_mutexes_and_conditions, SDL_PIXELFORMAT_RGBA8888, access, width, height );
 	if( mTexture == NULL )
 	{
 		printf( "Unable to create blank texture! SDL Error: %s\n", SDL_GetError() );
@@ -251,7 +259,7 @@ bool LTexture_atomic_operations::createBlank( int width, int height, SDL_Texture
 	return mTexture != NULL;
 }
 
-void LTexture_atomic_operations::free()
+void LTexture_mutexes_and_conditions::free()
 {
 	//Free texture if it exists
 	if( mTexture != NULL )
@@ -265,25 +273,25 @@ void LTexture_atomic_operations::free()
 	}
 }
 
-void LTexture_atomic_operations::setColor( Uint8 red, Uint8 green, Uint8 blue )
+void LTexture_mutexes_and_conditions::setColor( Uint8 red, Uint8 green, Uint8 blue )
 {
 	//Modulate texture rgb
 	SDL_SetTextureColorMod( mTexture, red, green, blue );
 }
 
-void LTexture_atomic_operations::setBlendMode( SDL_BlendMode blending )
+void LTexture_mutexes_and_conditions::setBlendMode( SDL_BlendMode blending )
 {
 	//Set blending function
 	SDL_SetTextureBlendMode( mTexture, blending );
 }
 		
-void LTexture_atomic_operations::setAlpha( Uint8 alpha )
+void LTexture_mutexes_and_conditions::setAlpha( Uint8 alpha )
 {
 	//Modulate texture alpha
 	SDL_SetTextureAlphaMod( mTexture, alpha );
 }
 
-void LTexture_atomic_operations::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
+void LTexture_mutexes_and_conditions::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
@@ -296,26 +304,26 @@ void LTexture_atomic_operations::render( int x, int y, SDL_Rect* clip, double an
 	}
 
 	//Render to screen
-	SDL_RenderCopyEx( gRenderer_atomic_operations, mTexture, clip, &renderQuad, angle, center, flip );
+	SDL_RenderCopyEx( gRenderer_mutexes_and_conditions, mTexture, clip, &renderQuad, angle, center, flip );
 }
 
-void LTexture_atomic_operations::setAsRenderTarget()
+void LTexture_mutexes_and_conditions::setAsRenderTarget()
 {
 	//Make self render target
-	SDL_SetRenderTarget( gRenderer_atomic_operations, mTexture );
+	SDL_SetRenderTarget( gRenderer_mutexes_and_conditions, mTexture );
 }
 
-int LTexture_atomic_operations::getWidth()
+int LTexture_mutexes_and_conditions::getWidth()
 {
 	return mWidth;
 }
 
-int LTexture_atomic_operations::getHeight()
+int LTexture_mutexes_and_conditions::getHeight()
 {
 	return mHeight;
 }
 
-bool LTexture_atomic_operations::lockTexture()
+bool LTexture_mutexes_and_conditions::lockTexture()
 {
 	bool success = true;
 
@@ -338,7 +346,7 @@ bool LTexture_atomic_operations::lockTexture()
 	return success;
 }
 
-bool LTexture_atomic_operations::unlockTexture()
+bool LTexture_mutexes_and_conditions::unlockTexture()
 {
 	bool success = true;
 
@@ -359,12 +367,12 @@ bool LTexture_atomic_operations::unlockTexture()
 	return success;
 }
 
-void* LTexture_atomic_operations::getPixels()
+void* LTexture_mutexes_and_conditions::getPixels()
 {
 	return mPixels;
 }
 
-void LTexture_atomic_operations::copyPixels( void* pixels )
+void LTexture_mutexes_and_conditions::copyPixels( void* pixels )
 {
 	//Texture is locked
 	if( mPixels != NULL )
@@ -374,12 +382,12 @@ void LTexture_atomic_operations::copyPixels( void* pixels )
 	}
 }
 
-int LTexture_atomic_operations::getPitch()
+int LTexture_mutexes_and_conditions::getPitch()
 {
 	return mPitch;
 }
 
-Uint32 LTexture_atomic_operations::getPixel32( unsigned int x, unsigned int y )
+Uint32 LTexture_mutexes_and_conditions::getPixel32( unsigned int x, unsigned int y )
 {
     //Convert the pixels to 32 bit
     Uint32 *pixels = (Uint32*)mPixels;
@@ -388,7 +396,7 @@ Uint32 LTexture_atomic_operations::getPixel32( unsigned int x, unsigned int y )
     return pixels[ ( y * ( mPitch / 4 ) ) + x ];
 }
 
-bool init_atomic_operations()
+bool init_mutexes_and_conditions()
 {
 	//Initialization flag
 	bool success = true;
@@ -408,8 +416,8 @@ bool init_atomic_operations()
 		}
 
 		//Create window
-		gWindow_atomic_operations = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-		if( gWindow_atomic_operations == NULL )
+		gWindow_mutexes_and_conditions = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		if( gWindow_mutexes_and_conditions == NULL )
 		{
 			printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
 			success = false;
@@ -417,8 +425,8 @@ bool init_atomic_operations()
 		else
 		{
 			//Create renderer for window
-			gRenderer_atomic_operations = SDL_CreateRenderer( gWindow_atomic_operations, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
-			if( gRenderer_atomic_operations == NULL )
+			gRenderer_mutexes_and_conditions = SDL_CreateRenderer( gWindow_mutexes_and_conditions, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+			if( gRenderer_mutexes_and_conditions == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
 				success = false;
@@ -426,7 +434,7 @@ bool init_atomic_operations()
 			else
 			{
 				//Initialize renderer color
-				SDL_SetRenderDrawColor( gRenderer_atomic_operations, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_SetRenderDrawColor( gRenderer_mutexes_and_conditions, 0xFF, 0xFF, 0xFF, 0xFF );
 
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
@@ -442,13 +450,20 @@ bool init_atomic_operations()
 	return success;
 }
 
-bool loadMedia_atomic_operations()
+bool loadMedia_mutexes_and_conditions()
 {
+	//Create the mutex
+	gBufferLock_mutexes_and_conditions = SDL_CreateMutex();
+			
+	//Create conditions
+	gCanProduce_mutexes_and_conditions = SDL_CreateCond();
+	gCanConsume_mutexes_and_conditions = SDL_CreateCond();
+
 	//Loading success flag
 	bool success = true;
 	
 	//Load splash texture
-	if( !gSplashTexture_atomic_operations.loadFromFile( "splash.png" ) )
+	if( !gSplashTexture_mutexes_and_conditions.loadFromFile( "splash.png" ) )
 	{
 		printf( "Failed to load splash texture!\n" );
 		success = false;
@@ -457,71 +472,135 @@ bool loadMedia_atomic_operations()
 	return success;
 }
 
-void close_atomic_operations()
+void close_mutexes_and_conditions()
 {
 	//Free loaded images
-	gSplashTexture_atomic_operations.free();
+	gSplashTexture_mutexes_and_conditions.free();
+
+	//Destroy the mutex
+	SDL_DestroyMutex( gBufferLock_mutexes_and_conditions);
+	gBufferLock_mutexes_and_conditions = NULL;
+			
+	//Destroy conditions
+	SDL_DestroyCond( gCanProduce_mutexes_and_conditions);
+	SDL_DestroyCond( gCanConsume_mutexes_and_conditions);
+	gCanProduce_mutexes_and_conditions = NULL;
+	gCanConsume_mutexes_and_conditions = NULL;
 
 	//Destroy window	
-	SDL_DestroyRenderer( gRenderer_atomic_operations);
-	SDL_DestroyWindow( gWindow_atomic_operations);
-	gWindow_atomic_operations = NULL;
-	gRenderer_atomic_operations = NULL;
+	SDL_DestroyRenderer( gRenderer_mutexes_and_conditions);
+	SDL_DestroyWindow( gWindow_mutexes_and_conditions);
+	gWindow_mutexes_and_conditions = NULL;
+	gRenderer_mutexes_and_conditions = NULL;
 
 	//Quit SDL subsystems
 	IMG_Quit();
 	SDL_Quit();
 }
 
-int worker_atomic_operations( void* data )
+int producer_mutexes_and_conditions( void *data )
 {
-	printf( "%s starting...\n", data );
+	printf( "\nProducer started...\n" );
 
-	//Pre thread random seeding
+	//Seed thread random
 	srand( SDL_GetTicks() );
 	
-	//Work 5 times
+	//Produce
 	for( int i = 0; i < 5; ++i )
 	{
-		//Wait randomly
-		SDL_Delay( 16 + rand() % 32 );
+		//Wait
+		SDL_Delay( rand() % 1000 );
 		
-		//Lock
-		SDL_AtomicLock( &gDataLock_atomic_operations);
-
-		//Print pre work data
-		printf( "%s gets %d\n", data, gData_atomic_operations);
-
-		//"Work"
-		gData_atomic_operations = rand() % 256;
-
-		//Print post work data
-		printf( "%s sets %d\n\n", data, gData_atomic_operations);
-		
-		//Unlock
-		SDL_AtomicUnlock( &gDataLock_atomic_operations);
-
-		//Wait randomly
-		SDL_Delay( 16 + rand() % 640 );
+		//Produce
+		produce_mutexes_and_conditions();
 	}
 
-	printf( "%s finished!\n\n", data );
+	printf( "\nProducer finished!\n" );
+	
+	return 0;
+
+}
+
+int consumer_mutexes_and_conditions( void *data )
+{
+	printf( "\nConsumer started...\n" );
+
+	//Seed thread random
+	srand( SDL_GetTicks() );
+
+	for( int i = 0; i < 5; ++i )
+	{
+		//Wait
+		SDL_Delay( rand() % 1000 );
+		
+		//Consume
+		consume_mutexes_and_conditions();
+	}
+	
+	printf( "\nConsumer finished!\n" );
 
 	return 0;
 }
 
+void produce_mutexes_and_conditions()
+{
+	//Lock
+	SDL_LockMutex( gBufferLock_mutexes_and_conditions);
+	
+	//If the buffer is full
+	if( gData_mutexes_and_conditions != -1 )
+	{
+		//Wait for buffer to be cleared
+		printf( "\nProducer encountered full buffer, waiting for consumer to empty buffer...\n" );
+		SDL_CondWait( gCanProduce_mutexes_and_conditions, gBufferLock_mutexes_and_conditions);
+	}
 
-int main_atomic_operations( int argc, char* args[] )
+	//Fill and show buffer
+	gData_mutexes_and_conditions = rand() % 255;
+	printf( "\nProduced %d\n", gData_mutexes_and_conditions);
+	
+	//Unlock
+	SDL_UnlockMutex( gBufferLock_mutexes_and_conditions);
+	
+	//Signal consumer
+	SDL_CondSignal( gCanConsume_mutexes_and_conditions);
+}
+
+void consume_mutexes_and_conditions()
+{
+	//Lock
+	SDL_LockMutex( gBufferLock_mutexes_and_conditions);
+	
+	//If the buffer is empty
+	if( gData_mutexes_and_conditions == -1 )
+	{
+		//Wait for buffer to be filled
+		printf( "\nConsumer encountered empty buffer, waiting for producer to fill buffer...\n" );
+		SDL_CondWait( gCanConsume_mutexes_and_conditions, gBufferLock_mutexes_and_conditions);
+	}
+
+	//Show and empty buffer
+	printf( "\nConsumed %d\n", gData_mutexes_and_conditions);
+	gData_mutexes_and_conditions = -1;
+	
+	//Unlock
+	SDL_UnlockMutex( gBufferLock_mutexes_and_conditions);
+	
+	//Signal producer
+	SDL_CondSignal( gCanProduce_mutexes_and_conditions);
+}
+
+int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
-	if( !init_atomic_operations() )
+	if( !init_mutexes_and_conditions() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
 	else
 	{
 		//Load media
-		if( !loadMedia_atomic_operations() )
+		if( !loadMedia_mutexes_and_conditions() )
 		{
 			printf( "Failed to load media!\n" );
 		}
@@ -534,13 +613,11 @@ int main_atomic_operations( int argc, char* args[] )
 			SDL_Event e;
 
 			//Run the threads
-			srand( SDL_GetTicks() );
-			SDL_Thread* threadA = SDL_CreateThread( worker_atomic_operations, "Thread A", (void*)"Thread A" );
-			SDL_Delay( 16 + rand() % 32 );
-			SDL_Thread* threadB = SDL_CreateThread( worker_atomic_operations, "Thread B", (void*)"Thread B" );
+			SDL_Thread* producerThread = SDL_CreateThread( producer_mutexes_and_conditions, "Producer", NULL );
+			SDL_Thread* consumerThread = SDL_CreateThread( consumer_mutexes_and_conditions, "Consumer", NULL );
 			
 			//While application is running
-			while( quit == false )
+			while( !quit )
 			{
 				//Handle events on queue
 				while( SDL_PollEvent( &e ) != 0 )
@@ -553,24 +630,24 @@ int main_atomic_operations( int argc, char* args[] )
 				}
 
 				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer_atomic_operations, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer_atomic_operations);
+				SDL_SetRenderDrawColor( gRenderer_mutexes_and_conditions, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_RenderClear( gRenderer_mutexes_and_conditions);
 
 				//Render splash
-				gSplashTexture_atomic_operations.render( 0, 0 );
+				gSplashTexture_mutexes_and_conditions.render( 0, 0 );
 
 				//Update screen
-				SDL_RenderPresent( gRenderer_atomic_operations);
+				SDL_RenderPresent( gRenderer_mutexes_and_conditions);
 			}
 
-			//Wait for threads to finish
-			SDL_WaitThread( threadA, NULL );
-			SDL_WaitThread( threadB, NULL );
+			//Wait for producer and consumer to finish
+			SDL_WaitThread( consumerThread, NULL );
+			SDL_WaitThread( producerThread, NULL );
 		}
 	}
 
 	//Free resources and close SDL
-	close_atomic_operations();
+	close_mutexes_and_conditions();
 
 	return 0;
 }
