@@ -177,7 +177,7 @@ void close_SDL_and_opengl_2()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_SDL_and_opengl_2( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_SDL_and_opengl_2() )

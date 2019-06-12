@@ -165,5 +165,8 @@
     <ClCompile Include="src\50_SDL_and_opengl_2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\51_SDL_and_modern_opengl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
