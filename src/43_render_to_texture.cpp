@@ -463,7 +463,7 @@ void close_render_to_texture()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_render_to_texture( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_render_to_texture() )

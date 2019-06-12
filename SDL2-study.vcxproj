@@ -62,6 +62,7 @@
     <ClCompile Include="src\41_bitmap_fonts.cpp" />
     <ClCompile Include="src\42_texture_streaming.cpp" />
     <ClCompile Include="src\43_render_to_texture.cpp" />
+    <ClCompile Include="src\44_frame_independent_movement.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
