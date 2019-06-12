@@ -68,6 +68,7 @@
     <ClCompile Include="src\47_semaphores.cpp" />
     <ClCompile Include="src\48_atomic_operations.cpp" />
     <ClCompile Include="src\49_mutexes_and_conditions.cpp" />
+    <ClCompile Include="src\50_SDL_and_opengl_2.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

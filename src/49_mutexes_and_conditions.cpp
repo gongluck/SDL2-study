@@ -590,7 +590,7 @@ void consume_mutexes_and_conditions()
 	SDL_CondSignal( gCanProduce_mutexes_and_conditions);
 }
 
-int main( int argc, char* args[] )
+int main_mutexes_and_conditions( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_mutexes_and_conditions() )
