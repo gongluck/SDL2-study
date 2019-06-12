@@ -147,5 +147,8 @@
     <ClCompile Include="src\44_frame_independent_movement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\45_timer_callbacks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

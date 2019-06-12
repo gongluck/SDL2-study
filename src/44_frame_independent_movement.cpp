@@ -701,7 +701,7 @@ void close_frame_independent_movement()
 	SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main_frame_independent_movement( int argc, char* args[] )
 {
 	//Start up SDL and create window
 	if( !init_frame_independent_movement() )
