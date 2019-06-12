@@ -1,8 +1,9 @@
 /*This source code copyrighted by Lazy Foo' Productions (2004-2019)
 and may not be redistributed without written permission.*/
 
-//Using SDL, SDL_image, standard IO, and, strings
+//Using SDL, SDL Threads, SDL_image, standard IO, and, strings
 #include <SDL.h>
+#include <SDL_thread.h>
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
@@ -12,14 +13,14 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 //Texture wrapper class
-class LTexture_timer_callbacks
+class LTexture_multithreading
 {
 	public:
 		//Initializes variables
-		LTexture_timer_callbacks();
+		LTexture_multithreading();
 
 		//Deallocates memory
-		~LTexture_timer_callbacks();
+		~LTexture_multithreading();
 
 		//Loads image at specified path
 		bool loadFromFile( std::string path );
@@ -74,27 +75,27 @@ class LTexture_timer_callbacks
 };
 
 //Starts up SDL and creates window
-bool init_timer_callbacks();
+bool init_multithreading();
 
 //Loads media
-bool loadMedia_timer_callbacks();
+bool loadMedia_multithreading();
 
 //Frees media and shuts down SDL
-void close_timer_callbacks();
+void close_multithreading();
 
-//Our test callback function
-Uint32 callback_timer_callbacks( Uint32 interval, void* param );
+//Our test thread function
+int threadFunction_multithreading( void* data );
 
 //The window we'll be rendering to
-SDL_Window* gWindow_timer_callbacks = NULL;
+SDL_Window* gWindow_multithreading = NULL;
 
 //The window renderer
-SDL_Renderer* gRenderer_timer_callbacks = NULL;
+SDL_Renderer* gRenderer_multithreading = NULL;
 
 //Scene textures
-LTexture_timer_callbacks gSplashTexture_timer_callbacks;
+LTexture_multithreading gSplashTexture_multithreading;
 
-LTexture_timer_callbacks::LTexture_timer_callbacks()
+LTexture_multithreading::LTexture_multithreading()
 {
 	//Initialize
 	mTexture = NULL;
@@ -104,13 +105,13 @@ LTexture_timer_callbacks::LTexture_timer_callbacks()
 	mPitch = 0;
 }
 
-LTexture_timer_callbacks::~LTexture_timer_callbacks()
+LTexture_multithreading::~LTexture_multithreading()
 {
 	//Deallocate
 	free();
 }
 
-bool LTexture_timer_callbacks::loadFromFile( std::string path )
+bool LTexture_multithreading::loadFromFile( std::string path )
 {
 	//Get rid of preexisting texture
 	free();
@@ -135,7 +136,7 @@ bool LTexture_timer_callbacks::loadFromFile( std::string path )
 		else
 		{
 			//Create blank streamable texture
-			newTexture = SDL_CreateTexture( gRenderer_timer_callbacks, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, formattedSurface->w, formattedSurface->h );
+			newTexture = SDL_CreateTexture( gRenderer_multithreading, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, formattedSurface->w, formattedSurface->h );
 			if( newTexture == NULL )
 			{
 				printf( "Unable to create blank texture! SDL Error: %s\n", SDL_GetError() );
@@ -227,10 +228,10 @@ bool LTexture::loadFromRenderedText( std::string textureText, SDL_Color textColo
 }
 #endif
 		
-bool LTexture_timer_callbacks::createBlank( int width, int height, SDL_TextureAccess access )
+bool LTexture_multithreading::createBlank( int width, int height, SDL_TextureAccess access )
 {
 	//Create uninitialized texture
-	mTexture = SDL_CreateTexture( gRenderer_timer_callbacks, SDL_PIXELFORMAT_RGBA8888, access, width, height );
+	mTexture = SDL_CreateTexture( gRenderer_multithreading, SDL_PIXELFORMAT_RGBA8888, access, width, height );
 	if( mTexture == NULL )
 	{
 		printf( "Unable to create blank texture! SDL Error: %s\n", SDL_GetError() );
@@ -244,7 +245,7 @@ bool LTexture_timer_callbacks::createBlank( int width, int height, SDL_TextureAc
 	return mTexture != NULL;
 }
 
-void LTexture_timer_callbacks::free()
+void LTexture_multithreading::free()
 {
 	//Free texture if it exists
 	if( mTexture != NULL )
@@ -258,25 +259,25 @@ void LTexture_timer_callbacks::free()
 	}
 }
 
-void LTexture_timer_callbacks::setColor( Uint8 red, Uint8 green, Uint8 blue )
+void LTexture_multithreading::setColor( Uint8 red, Uint8 green, Uint8 blue )
 {
 	//Modulate texture rgb
 	SDL_SetTextureColorMod( mTexture, red, green, blue );
 }
 
-void LTexture_timer_callbacks::setBlendMode( SDL_BlendMode blending )
+void LTexture_multithreading::setBlendMode( SDL_BlendMode blending )
 {
 	//Set blending function
 	SDL_SetTextureBlendMode( mTexture, blending );
 }
 		
-void LTexture_timer_callbacks::setAlpha( Uint8 alpha )
+void LTexture_multithreading::setAlpha( Uint8 alpha )
 {
 	//Modulate texture alpha
 	SDL_SetTextureAlphaMod( mTexture, alpha );
 }
 
-void LTexture_timer_callbacks::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
+void LTexture_multithreading::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip )
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
@@ -289,26 +290,26 @@ void LTexture_timer_callbacks::render( int x, int y, SDL_Rect* clip, double angl
 	}
 
 	//Render to screen
-	SDL_RenderCopyEx( gRenderer_timer_callbacks, mTexture, clip, &renderQuad, angle, center, flip );
+	SDL_RenderCopyEx( gRenderer_multithreading, mTexture, clip, &renderQuad, angle, center, flip );
 }
 
-void LTexture_timer_callbacks::setAsRenderTarget()
+void LTexture_multithreading::setAsRenderTarget()
 {
 	//Make self render target
-	SDL_SetRenderTarget( gRenderer_timer_callbacks, mTexture );
+	SDL_SetRenderTarget( gRenderer_multithreading, mTexture );
 }
 
-int LTexture_timer_callbacks::getWidth()
+int LTexture_multithreading::getWidth()
 {
 	return mWidth;
 }
 
-int LTexture_timer_callbacks::getHeight()
+int LTexture_multithreading::getHeight()
 {
 	return mHeight;
 }
 
-bool LTexture_timer_callbacks::lockTexture()
+bool LTexture_multithreading::lockTexture()
 {
 	bool success = true;
 
@@ -331,7 +332,7 @@ bool LTexture_timer_callbacks::lockTexture()
 	return success;
 }
 
-bool LTexture_timer_callbacks::unlockTexture()
+bool LTexture_multithreading::unlockTexture()
 {
 	bool success = true;
 
@@ -352,12 +353,12 @@ bool LTexture_timer_callbacks::unlockTexture()
 	return success;
 }
 
-void* LTexture_timer_callbacks::getPixels()
+void* LTexture_multithreading::getPixels()
 {
 	return mPixels;
 }
 
-void LTexture_timer_callbacks::copyPixels( void* pixels )
+void LTexture_multithreading::copyPixels( void* pixels )
 {
 	//Texture is locked
 	if( mPixels != NULL )
@@ -367,12 +368,12 @@ void LTexture_timer_callbacks::copyPixels( void* pixels )
 	}
 }
 
-int LTexture_timer_callbacks::getPitch()
+int LTexture_multithreading::getPitch()
 {
 	return mPitch;
 }
 
-Uint32 LTexture_timer_callbacks::getPixel32( unsigned int x, unsigned int y )
+Uint32 LTexture_multithreading::getPixel32( unsigned int x, unsigned int y )
 {
     //Convert the pixels to 32 bit
     Uint32 *pixels = (Uint32*)mPixels;
@@ -381,13 +382,13 @@ Uint32 LTexture_timer_callbacks::getPixel32( unsigned int x, unsigned int y )
     return pixels[ ( y * ( mPitch / 4 ) ) + x ];
 }
 
-bool init_timer_callbacks()
+bool init_multithreading()
 {
 	//Initialization flag
 	bool success = true;
 
 	//Initialize SDL
-	if (SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER ) < 0 )
+	if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
 	{
 		printf( "SDL could not initialize! SDL Error: %s\n", SDL_GetError() );
 		success = false;
@@ -404,8 +405,8 @@ bool init_timer_callbacks()
 		srand( SDL_GetTicks() );
 
 		//Create window
-		gWindow_timer_callbacks = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-		if( gWindow_timer_callbacks == NULL )
+		gWindow_multithreading = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+		if( gWindow_multithreading == NULL )
 		{
 			printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
 			success = false;
@@ -413,8 +414,8 @@ bool init_timer_callbacks()
 		else
 		{
 			//Create renderer for window
-			gRenderer_timer_callbacks = SDL_CreateRenderer( gWindow_timer_callbacks, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
-			if( gRenderer_timer_callbacks == NULL )
+			gRenderer_multithreading = SDL_CreateRenderer( gWindow_multithreading, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+			if( gRenderer_multithreading == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
 				success = false;
@@ -422,7 +423,7 @@ bool init_timer_callbacks()
 			else
 			{
 				//Initialize renderer color
-				SDL_SetRenderDrawColor( gRenderer_timer_callbacks, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_SetRenderDrawColor( gRenderer_multithreading, 0xFF, 0xFF, 0xFF, 0xFF );
 
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
@@ -438,13 +439,13 @@ bool init_timer_callbacks()
 	return success;
 }
 
-bool loadMedia_timer_callbacks()
+bool loadMedia_multithreading()
 {
 	//Loading success flag
 	bool success = true;
 	
 	//Load splash texture
-	if( !gSplashTexture_timer_callbacks.loadFromFile( "splash.png" ) )
+	if( !gSplashTexture_multithreading.loadFromFile( "splash.png" ) )
 	{
 		printf( "Failed to load splash texture!\n" );
 		success = false;
@@ -453,41 +454,41 @@ bool loadMedia_timer_callbacks()
 	return success;
 }
 
-void close_timer_callbacks()
+void close_multithreading()
 {
 	//Free loaded images
-	gSplashTexture_timer_callbacks.free();
+	gSplashTexture_multithreading.free();
 
 	//Destroy window	
-	SDL_DestroyRenderer( gRenderer_timer_callbacks);
-	SDL_DestroyWindow( gWindow_timer_callbacks);
-	gWindow_timer_callbacks = NULL;
-	gRenderer_timer_callbacks = NULL;
+	SDL_DestroyRenderer( gRenderer_multithreading);
+	SDL_DestroyWindow( gWindow_multithreading);
+	gWindow_multithreading = NULL;
+	gRenderer_multithreading = NULL;
 
 	//Quit SDL subsystems
 	IMG_Quit();
 	SDL_Quit();
 }
 
-Uint32 callback_timer_callbacks( Uint32 interval, void* param )
+int threadFunction_multithreading( void* data )
 {
-	//Print callback message
-	printf( "Callback called back with message: %s\n", (char*)param );
-    
+	//Print incoming data
+	printf( "Running thread with value = %d\n", (int)data );
+
 	return 0;
 }
 
-int main_timer_callbacks( int argc, char* args[] )
+int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
-	if( !init_timer_callbacks() )
+	if( !init_multithreading() )
 	{
 		printf( "Failed to initialize!\n" );
 	}
 	else
 	{
 		//Load media
-		if( !loadMedia_timer_callbacks() )
+		if( !loadMedia_multithreading() )
 		{
 			printf( "Failed to load media!\n" );
 		}
@@ -499,8 +500,9 @@ int main_timer_callbacks( int argc, char* args[] )
 			//Event handler
 			SDL_Event e;
 
-			//Set callback
-			SDL_TimerID timerID = SDL_AddTimer( 3 * 1000, callback_timer_callbacks, (void*)("3 seconds waited!") );
+			//Run the thread
+			int data = 101;
+			SDL_Thread* threadID = SDL_CreateThread( threadFunction_multithreading, "LazyThread", (void*)data );
 
 			//While application is running
 			while( !quit )
@@ -516,23 +518,23 @@ int main_timer_callbacks( int argc, char* args[] )
 				}
 
 				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer_timer_callbacks, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer_timer_callbacks);
+				SDL_SetRenderDrawColor( gRenderer_multithreading, 0xFF, 0xFF, 0xFF, 0xFF );
+				SDL_RenderClear( gRenderer_multithreading);
 
-				//Render splash
-				gSplashTexture_timer_callbacks.render( 0, 0 );
+				//Render prompt
+				gSplashTexture_multithreading.render( 0, 0 );
 
 				//Update screen
-				SDL_RenderPresent( gRenderer_timer_callbacks);
+				SDL_RenderPresent( gRenderer_multithreading);
 			}
 
 			//Remove timer in case the call back was not called
-			SDL_RemoveTimer( timerID );
+			SDL_WaitThread( threadID, NULL );
 		}
 	}
 
 	//Free resources and close SDL
-	close_timer_callbacks();
+	close_multithreading();
 
 	return 0;
 }

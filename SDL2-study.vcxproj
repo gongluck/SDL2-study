@@ -64,6 +64,7 @@
     <ClCompile Include="src\43_render_to_texture.cpp" />
     <ClCompile Include="src\44_frame_independent_movement.cpp" />
     <ClCompile Include="src\45_timer_callbacks.cpp" />
+    <ClCompile Include="src\46_multithreading.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
