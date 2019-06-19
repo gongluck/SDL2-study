@@ -3,14 +3,18 @@
 
 #include <SDL.h>
 #include <string>
+#include <mutex>
 
 class Csdl2
 {
 public:
+    // 状态
+    enum STATUS { STOP = 0b00, LOCKEDV = 0b01, LOCKEDA = 0b10, LOCKEDBOTH = 0b11 };
+
     // 全局的初始化
-    static bool global_init(Uint32 flags, std::string& err);
+    bool global_init(Uint32 flags, std::string& err);
     // 全局的反初始化
-    static bool global_uninit(std::string& err);
+    bool global_uninit(std::string& err);
 
     // 设置(windows)窗口
     bool set_window(const void* hwnd, std::string& err);
@@ -24,10 +28,23 @@ public:
     // 销毁关联资源
     bool detach_window(std::string& err);
 
+    // 设置音频格式和处理回调
+    bool set_audio_fmt(int freq, SDL_AudioFormat fmt, Uint8 channels, Uint16 samples, SDL_AudioCallback callback, void* userdata, std::string& err);
+    // 开始音频播放
+    bool start_audio(std::string& err);
+    // 停止音频播放
+    bool stop_audio(std::string& err);
+
 private:
+    STATUS status_ = STOP;
+    std::recursive_mutex mutex_;
+
     SDL_Window* win_ = nullptr;
     SDL_Renderer* renderer_ = nullptr;
     SDL_Texture* texture_ = nullptr;
+
+    SDL_AudioSpec reqspec_ = { 0 };
+    SDL_AudioSpec recspec_ = { 0 };
 };
 
 #endif//__CSDL2_H__
